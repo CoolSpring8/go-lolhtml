@@ -1,5 +1,7 @@
 # lolhtml
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/coolspring8/lolhtml)](https://goreportcard.com/report/github.com/coolspring8/lolhtml)
+
 Go bindings for [cloudflare/lol-html](https://github.com/cloudflare/lol-html/), the *Low Output Latency streaming HTML rewriter/parser with CSS-selector based API.*
 
 **Status:** All abilities provided by C-API implemented, except for customized user data in handlers. The code is at its early stage and the API is therefore subject to change. If you have any ideas on how API can be better structured, feel free to open a PR or an issue.
@@ -42,7 +44,7 @@ func main() {
 	rb.AddElementContentHandlers(
 		s,
 		func(e *lolhtml.Element) lolhtml.RewriterDirective {
-			e.SetInnerContentAsRaw("World")
+			e.SetInnerContentAsRaw("LOL-HTML")
 			return lolhtml.Continue
 		},
 		nil,
@@ -63,12 +65,12 @@ func main() {
 	)
 	defer r.Free()
 	r.WriteString("<p>Hello <span>")
-	r.WriteString("LOL-HTML</span>!</p>")
+	r.WriteString("World</span>!</p>")
 	r.End()
 }
 ```
 
-This program takes chunked input `<p>Hello <span>LOL-HTML</span>!</p>` and rewrites texts in `span` tag to "World". The output is ``<p>Hello <span>World</span>!</p>`` .
+The above program takes chunked input `<p>Hello <span>World</span>!</p>`, rewrites texts in `span` tags to "LOL-HTML" and prints the result to standard output. The result is ``<p>Hello <span>LOL-HTML</span>!</p>`` .
 
 ## Documentation
 
