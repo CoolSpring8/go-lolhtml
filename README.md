@@ -1,8 +1,8 @@
-# lolhtml
+# go-lolhtml
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/coolspring8/lolhtml)](https://goreportcard.com/report/github.com/coolspring8/lolhtml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/coolspring8/go-lolhtml)](https://goreportcard.com/report/github.com/coolspring8/go-lolhtml)
 
-Go bindings for [cloudflare/lol-html](https://github.com/cloudflare/lol-html/), the *Low Output Latency streaming HTML rewriter/parser with CSS-selector based API.*
+Go bindings for the Rust library [cloudflare/lol-html](https://github.com/cloudflare/lol-html/), the *Low Output Latency streaming HTML rewriter/parser with CSS-selector based API*, talking via CGO.
 
 **Status:** All abilities provided by C-API implemented, except for customized user data in handlers. The code is at its early stage and the API is therefore subject to change. If you have any ideas on how API can be better structured, feel free to open a PR or an issue.
 
@@ -12,13 +12,14 @@ Rust is required to build the lol-html library.
 
 For Linux:
 
-```bash
-git clone --recursive https://github.com/coolspring8/lolhtml.git
-cargo build --release --manifest-path ./lol-html/c-api/ --target-dir ./
-go intall
+```shell
+$ git clone --recursive https://github.com/coolspring8/go-lolhtml.git
+$ cd go-lolhtml
+$ cargo build --release --manifest-path ./lol-html/c-api/ --target-dir ./
+$ go intall
 ```
 
-For Windows users, as Rust relies on MSVC toolchain by default, one more step is needed between `cargo build` and `go install`: create a `.a` file from compiled artifacts. This snippet works for me:
+For Windows users, as Rust relies on MSVC toolchain while Go's default is GCC, one extra step is needed between `cargo build` and `go install`: to create a `.a` file from compiled artifacts. This snippet works for me:
 
 ```powershell
 gendef ./release/lolhtml.dll
@@ -33,7 +34,7 @@ package main
 
 import (
     "fmt"
-    "github.com/coolspring8/lolhtml"
+    "github.com/coolspring8/go-lolhtml"
 )
 
 func main() {
@@ -70,13 +71,13 @@ func main() {
 }
 ```
 
-The above program takes chunked input `<p>Hello <span>World</span>!</p>`, rewrites texts in `span` tags to "LOL-HTML" and prints the result to standard output. The result is ``<p>Hello <span>LOL-HTML</span>!</p>`` .
+The above program takes chunked input `<p>Hello <span>World</span>!</p>`, rewrites texts in `span` tags to "LOL-HTML" and prints the result to standard output. Now the result is ``<p>Hello <span>LOL-HTML</span>!</p>`` .
 
 ## Documentation
 
-Available at [pkg.go.dev](https://pkg.go.dev/github.com/coolspring8/lolhtml). (WIP)
+Available at [pkg.go.dev](https://pkg.go.dev/github.com/coolspring8/go-lolhtml). (WIP)
 
-## Known Issue
+## Known Issues
 
 - For now, to use `Rewriter.End()` without causing panic, you will probably need to assign a stub `DocEndHandler` function when calling `AddDocumentContentHandlers()`.
 

@@ -3,7 +3,7 @@ package lolhtml_test
 import (
 	"errors"
 	"fmt"
-	"github.com/coolspring8/lolhtml"
+	"github.com/coolspring8/go-lolhtml"
 	"testing"
 )
 
