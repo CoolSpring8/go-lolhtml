@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/lolhtml.iml" filepath="$PROJECT_DIR$/lolhtml.iml" />
+      <module fileurl="file://$PROJECT_DIR$/go-lolhtml.iml" filepath="$PROJECT_DIR$/go-lolhtml.iml" />
     </modules>
   </component>
 </project>
