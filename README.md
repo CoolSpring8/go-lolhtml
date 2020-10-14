@@ -2,7 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/coolspring8/go-lolhtml)](https://goreportcard.com/report/github.com/coolspring8/go-lolhtml)
 
-Go bindings for the Rust library [cloudflare/lol-html](https://github.com/cloudflare/lol-html/), the *Low Output Latency streaming HTML rewriter/parser with CSS-selector based API*, talking via CGO.
+Go bindings for the Rust library [cloudflare/lol-html](https://github.com/cloudflare/lol-html/), the *Low Output Latency streaming HTML rewriter/parser with CSS-selector based API*, talking via cgo.
 
 **Status:** All abilities provided by C-API implemented, except for customized user data in handlers. The code is at its early stage and the API is therefore subject to change. If you have any ideas on how API can be better structured, feel free to open a PR or an issue.
 
@@ -10,22 +10,33 @@ Go bindings for the Rust library [cloudflare/lol-html](https://github.com/cloudf
 
 Rust is required to build the lol-html library.
 
-For Linux:
+### For Linux:
+
+(This is somehow "dirty". Please inform me of any better ways.)
 
 ```shell
-$ git clone --recursive https://github.com/coolspring8/go-lolhtml.git
-$ cd go-lolhtml
-$ cargo build --release --manifest-path ./lol-html/c-api/ --target-dir ./
-$ go intall
+$ # First build cloudflare/lol-html c-api from source
+$ git clone https://github.com/cloudflare/lol-html.git
+$ cargo build --release --manifest-path ./lol-html/c-api/Cargo.toml
+$ mkdir /usr/local/include/lolhtml /usr/local/lib/lolhtml
+$ mv ./lol-html/c-api/include/lol_html.h /usr/local/include/lolhtml
+$ mv ./lol-html/c-api/target/release/liblolhtml.so /usr/local/lib/lolhtml
+$ rm -r ./lol-html/
+$ # Then run normal go get
+$ go get github.com/coolspring8/go-lolhtml
 ```
 
-For Windows users, as Rust relies on MSVC toolchain while Go's default is GCC, one extra step is needed between `cargo build` and `go install`: to create a `.a` file from compiled artifacts. This snippet works for me:
+### For Windows: (the following description is outdated)
+
+As Rust relies on MSVC toolchain while Go's default is GCC, one extra step is needed between `cargo build` and `go install`: to create a `.a` file from compiled artifacts. This snippet works for me:
 
 ```powershell
 gendef ./release/lolhtml.dll
 dlltool --as-flags=--64 -m i386:x86-64 -k --output-lib ./lolhtml.a --input-def lolhtml.def
 cp ./release/lolhtml.dll ./
 ```
+
+## Getting Started
 
 Now let's initialize a project and create `main.go`:
 
@@ -71,7 +82,9 @@ func main() {
 }
 ```
 
-The above program takes chunked input `<p>Hello <span>World</span>!</p>`, rewrites texts in `span` tags to "LOL-HTML" and prints the result to standard output. Now the result is ``<p>Hello <span>LOL-HTML</span>!</p>`` .
+The above program takes chunked input `<p>Hello <span>World</span>!</p>`, rewrites texts in `span` tags to "LOL-HTML" and prints the result to standard output.
+
+And the result is ``<p>Hello <span>LOL-HTML</span>!</p>`` .
 
 ## Documentation
 

@@ -1,8 +1,8 @@
 package lolhtml
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/lol-html/c-api/include
-#cgo LDFLAGS: ${SRCDIR}/lolhtml.a
+#cgo CFLAGS: -I/usr/local/include/lolhtml
+#cgo LDFLAGS: /usr/local/lib/lolhtml/liblolhtml.so
 #include <stdlib.h>
 #include "lol_html.h"
 extern void callback_sink(const char *chunk, size_t chunk_len, void *user_data);
