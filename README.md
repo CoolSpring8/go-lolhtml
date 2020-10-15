@@ -14,33 +14,15 @@ Go bindings for the Rust library [cloudflare/lol-html](https://github.com/cloudf
 
 ## Installation
 
-Rust is required to build the lol-html library.
-
-### For Linux:
-
-(This is somehow "dirty". Please inform me of any better ways.)
+For Linux/macOS/Windows x86_64 platforms, installation is as simple as a single `go get`:
 
 ```shell
-$ # First build cloudflare/lol-html c-api from source
-$ git clone https://github.com/cloudflare/lol-html.git
-$ cargo build --release --manifest-path ./lol-html/c-api/Cargo.toml
-$ mkdir /usr/local/include/lolhtml /usr/local/lib/lolhtml
-$ mv ./lol-html/c-api/include/lol_html.h /usr/local/include/lolhtml
-$ mv ./lol-html/c-api/target/release/liblolhtml.so /usr/local/lib/lolhtml
-$ rm -r ./lol-html/
-$ # Then run normal go get
 $ go get github.com/coolspring8/go-lolhtml
 ```
 
-### For Windows: (the following description is outdated)
+There is no need for you to install Rust. That's because lib-lolhtml could be prebuilt into static libraries, stored and shipped in `/build` folder, so that cgo can handle other matters naturally and smoothly.
 
-As Rust relies on MSVC toolchain while Go's default is GCC, one extra step is needed between `cargo build` and `go install`: to create a `.a` file from compiled artifacts. This snippet works for me:
-
-```powershell
-gendef ./release/lolhtml.dll
-dlltool --as-flags=--64 -m i386:x86-64 -k --output-lib ./lolhtml.a --input-def lolhtml.def
-cp ./release/lolhtml.dll ./
-```
+(For other platforms, you'll have to compile it yourself.)
 
 ## Getting Started
 
@@ -82,15 +64,15 @@ func main() {
 		},
 	)
 	defer r.Free()
-	r.WriteString("<p>Hello <span>")
-	r.WriteString("World</span>!</p>")
+	r.WriteString("Hello, <span>")
+	r.WriteString("World</span>!")
 	r.End()
 }
 ```
 
-The above program takes chunked input `<p>Hello <span>World</span>!</p>`, rewrites texts in `span` tags to "LOL-HTML" and prints the result to standard output.
+The above program takes chunked input `Hello, <span>World</span>!`, rewrites texts in `span` tags to "LOL-HTML" and prints the result to standard output.
 
-And the result is ``<p>Hello <span>LOL-HTML</span>!</p>`` .
+And the result is `Hello, <span>LOL-HTML</span>!` .
 
 ## Documentation
 
