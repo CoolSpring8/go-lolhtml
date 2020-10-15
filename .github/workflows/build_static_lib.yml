@@ -1,0 +1,87 @@
+name: Build static library
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build lol_html crate
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - build: x86_64-linux
+            os: ubuntu-latest
+            rust: stable
+          - build: x86_64-macos
+            os: macos-latest
+            rust: stable
+          - build: x86_64-mingw
+            os: windows-latest
+            target: x86_64-pc-windows-gnu
+            rust: stable
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: "cloudflare/lol-html"
+      - uses: bytecodealliance/wasmtime/.github/actions/install-rust
+        with:
+          toolchain: ${{ matrix.rust }}
+      - uses: bytecodealliance/wasmtime/.github/actions/binary-compatible-builds
+        if: matrix.target == ''
+
+      - name: Configure Cargo target
+        run: |
+          echo CARGO_BUILD_TARGET=${{ matrix.target }} >> $GITHUB_ENV
+          rustup target add ${{ matrix.target }}
+        if: matrix.target != ''
+
+      - run: cargo build --release --manifest-path c-api/Cargo.toml
+
+      - run: mkdir dist
+
+      - run: cp target/release/liblolhtml.a dist
+        if: matrix.os == 'ubuntu-latest' && matrix.target == ''
+      - run: cp target/release/liblolhtml.a dist
+        if: matrix.os == 'macos-latest'
+      - run: cp target/x86_64-pc-windows-gnu/release/liblolhtml.a dist
+        if: matrix.build == 'x86_64-mingw'
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: bins-${{ matrix.build }}
+          path: dist
+
+  publish:
+    name: publish
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Download x86_64 Linux binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: bins-x86_64-linux
+          path: linux-x86_64
+      - name: Download x86_64 macOS binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: bins-x86_64-macos
+          path: macos-x86_64
+      - name: Download x86_64 Windows MinGW binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: bins-x86_64-mingw
+          path: windows-x86_64
+
+      - run: mv linux-x86_64 macos-x86_64 windows-x86_64 build
+
+      - name: Commit files
+        run: |
+          git config --local user.email "coolspring888@gmail.com"
+          git config --local user.name "CoolSpring8"
+          git commit -m "build: bump liblolhtml version" -a
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
