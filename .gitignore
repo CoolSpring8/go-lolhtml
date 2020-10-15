@@ -93,6 +93,4 @@ fabric.properties
 # Other files
 release/
 *.def
-*.a
-*.h
 .rustc_info.json
