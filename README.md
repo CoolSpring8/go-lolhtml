@@ -1,6 +1,6 @@
 # go-lolhtml
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/coolspring8/go-lolhtml/Go)![Codecov](https://img.shields.io/codecov/c/github/coolspring8/go-lolhtml)[![Go Report Card](https://goreportcard.com/badge/github.com/coolspring8/go-lolhtml)](https://goreportcard.com/report/github.com/coolspring8/go-lolhtml)[![PkgGoDev](https://pkg.go.dev/badge/CoolSpring8/go-lolhtml)](https://pkg.go.dev/CoolSpring8/go-lolhtml)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/coolspring8/go-lolhtml/Go) ![Codecov](https://img.shields.io/codecov/c/github/coolspring8/go-lolhtml) [![Go Report Card](https://goreportcard.com/badge/github.com/coolspring8/go-lolhtml)](https://goreportcard.com/report/github.com/coolspring8/go-lolhtml) [![PkgGoDev](https://pkg.go.dev/badge/CoolSpring8/go-lolhtml)](https://pkg.go.dev/CoolSpring8/go-lolhtml)
 
 Go bindings for the Rust library [cloudflare/lol-html](https://github.com/cloudflare/lol-html/), the *Low Output Latency streaming HTML rewriter/parser with CSS-selector based API*, talking via cgo.
 
