@@ -2,7 +2,6 @@ package lolhtml_test
 
 import (
 	"errors"
-	"fmt"
 	"github.com/coolspring8/go-lolhtml"
 	"testing"
 )
@@ -96,7 +95,7 @@ func TestNewSelector(t *testing.T) {
 		{"p:last-child", "Unsupported pseudo-class or pseudo-element in selector."},
 	}
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%s", tc.selector), func(t *testing.T) {
+		t.Run(tc.selector, func(t *testing.T) {
 			s, err := lolhtml.NewSelector(tc.selector)
 			defer s.Free()
 			if err != nil && err.Error() != tc.errorText {
@@ -265,7 +264,7 @@ func TestDocEndApi(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			docEnd.AppendAsRaw("hello & world")
+			err = docEnd.AppendAsRaw("hello & world")
 			if err != nil {
 				t.Error(err)
 			}
