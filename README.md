@@ -14,7 +14,7 @@ For Linux/macOS/Windows x86_64 platforms, installation is as simple as a single 
 $ go get github.com/coolspring8/go-lolhtml
 ```
 
-There is no need for you to install Rust. That's because lib-lolhtml could be prebuilt into static libraries, stored and shipped in `/build` folder, so that cgo can handle other matters naturally and smoothly.
+There is no need for you to install Rust. That's because lol-html could be prebuilt into static libraries, stored and shipped in `/build` folder, so that cgo can handle other matters naturally and smoothly.
 
 (For other platforms, you'll have to compile it yourself.)
 
@@ -84,3 +84,9 @@ Available at [pkg.go.dev](https://pkg.go.dev/github.com/coolspring8/go-lolhtml).
 ## License
 
 BSD 3-Clause "New" or "Revised" License
+
+## Disclaimer
+
+This is an unofficial binding.
+
+Cloudflare is a registered trademark of Cloudflare, Inc. Cloudflare name used in this project are for identification purposes only. The project is not associated in any way with Cloudflare Inc.
