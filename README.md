@@ -4,7 +4,7 @@
 
 Go bindings for the Rust library [cloudflare/lol-html](https://github.com/cloudflare/lol-html/), the *Low Output Latency streaming HTML rewriter/parser with CSS-selector based API*, talking via cgo.
 
-**Status:** All abilities provided by C-API implemented, except for customized user data in handlers. The code is at its early stage and the API is therefore subject to change. If you have any ideas on how API can be better structured, feel free to open a PR or an issue.
+**Status:** All abilities provided by C-API implemented, except for customized user data in handlers. Tests are partially covered. The code is at its early stage and the API is therefore subject to change. If you have any ideas on how API can be better structured, feel free to open a PR or an issue.
 
 ## Installation
 
@@ -16,7 +16,7 @@ $ go get github.com/coolspring8/go-lolhtml
 
 There is no need for you to install Rust. That's because lol-html could be prebuilt into static libraries, stored and shipped in `/build` folder, so that cgo can handle other matters naturally and smoothly.
 
-(For other platforms, you'll have to compile it yourself.)
+For other platforms, you'll have to compile it yourself.
 
 ## Getting Started
 
@@ -69,10 +69,6 @@ And the result is `Hello, <span>LOL-HTML</span>!` .
 ## Documentation
 
 Available at [pkg.go.dev](https://pkg.go.dev/github.com/coolspring8/go-lolhtml). (WIP)
-
-## Known Issues
-
-- For now, to use `Rewriter.End()` without causing panic, you will probably need to assign a stub `DocEndHandler` function when calling `AddDocumentContentHandlers()`.
 
 ## Other Bindings
 
