@@ -126,7 +126,7 @@ func TestDoctypeApi(t *testing.T) {
 		},
 		nil,
 		nil,
-		func(*lolhtml.DocEnd) lolhtml.RewriterDirective { return lolhtml.Continue },
+		nil,
 	)
 	r, err := rb.Build(lolhtml.NewDefaultConfig())
 	if err != nil {
@@ -160,7 +160,7 @@ func TestCommentApi(t *testing.T) {
 			return lolhtml.Continue
 		},
 		nil,
-		func(*lolhtml.DocEnd) lolhtml.RewriterDirective { return lolhtml.Continue },
+		nil,
 	)
 	var finalText string
 	r, err := rb.Build(lolhtml.Config{
@@ -221,7 +221,7 @@ func TestTextChunkApi(t *testing.T) {
 			}
 			return lolhtml.Continue
 		},
-		func(*lolhtml.DocEnd) lolhtml.RewriterDirective { return lolhtml.Continue },
+		nil,
 	)
 	var finalText string
 	r, err := rb.Build(lolhtml.Config{

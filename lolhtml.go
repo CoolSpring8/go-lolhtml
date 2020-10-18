@@ -130,19 +130,32 @@ func (rb *RewriterBuilder) AddDocumentContentHandlers(
 	textChunkHandler TextChunkHandler,
 	docEndHandler DocEndHandler,
 ) {
+	var cCallbackDoctypePointer, cCallbackCommentPointer, cCallbackTextChunkPointer, cCallbackDocEndPointer *[0]byte
+	if doctypeHandler != nil {
+		cCallbackDoctypePointer = (*[0]byte)(C.callback_doctype)
+	}
+	if commentHandler != nil {
+		cCallbackCommentPointer = (*[0]byte)(C.callback_comment)
+	}
+	if textChunkHandler != nil {
+		cCallbackTextChunkPointer = (*[0]byte)(C.callback_text_chunk)
+	}
+	if docEndHandler != nil {
+		cCallbackDocEndPointer = (*[0]byte)(C.callback_doc_end)
+	}
 	doctypeHandlerPointer := pointer.Save(doctypeHandler)
 	commentHandlerPointer := pointer.Save(commentHandler)
 	textChunkHandlerPointer := pointer.Save(textChunkHandler)
 	docEndHandlerPointer := pointer.Save(docEndHandler)
 	C.lol_html_rewriter_builder_add_document_content_handlers(
 		(*C.lol_html_rewriter_builder_t)(rb),
-		(*[0]byte)(C.callback_doctype),
+		cCallbackDoctypePointer,
 		doctypeHandlerPointer,
-		(*[0]byte)(C.callback_comment),
+		cCallbackCommentPointer,
 		commentHandlerPointer,
-		(*[0]byte)(C.callback_text_chunk),
+		cCallbackTextChunkPointer,
 		textChunkHandlerPointer,
-		(*[0]byte)(C.callback_doc_end),
+		cCallbackDocEndPointer,
 		docEndHandlerPointer,
 	)
 }
@@ -153,17 +166,27 @@ func (rb *RewriterBuilder) AddElementContentHandlers(
 	commentHandler CommentHandler,
 	textChunkHandler TextChunkHandler,
 ) {
-	commentHandlerPointer := pointer.Save(commentHandler)
+	var cCallbackElementPointer, cCallbackCommentPointer, cCallbackTextChunkPointer *[0]byte
+	if elementHandler != nil {
+		cCallbackElementPointer = (*[0]byte)(C.callback_element)
+	}
+	if commentHandler != nil {
+		cCallbackCommentPointer = (*[0]byte)(C.callback_comment)
+	}
+	if textChunkHandler != nil {
+		cCallbackTextChunkPointer = (*[0]byte)(C.callback_text_chunk)
+	}
 	elementHandlerPointer := pointer.Save(elementHandler)
+	commentHandlerPointer := pointer.Save(commentHandler)
 	textChunkHandlerPointer := pointer.Save(textChunkHandler)
 	C.lol_html_rewriter_builder_add_element_content_handlers(
 		(*C.lol_html_rewriter_builder_t)(rb),
 		(*C.lol_html_selector_t)(selector),
-		(*[0]byte)(C.callback_element),
+		cCallbackElementPointer,
 		elementHandlerPointer,
-		(*[0]byte)(C.callback_comment),
+		cCallbackCommentPointer,
 		commentHandlerPointer,
-		(*[0]byte)(C.callback_text_chunk),
+		cCallbackTextChunkPointer,
 		textChunkHandlerPointer,
 	)
 }

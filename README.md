@@ -42,9 +42,7 @@ func main() {
 			return lolhtml.Continue
 		},
 		nil,
-		func(*lolhtml.TextChunk) lolhtml.RewriterDirective {
-			return lolhtml.Continue
-		},
+		nil,
 	)
 	r, _ := rb.Build(
 		lolhtml.Config{
