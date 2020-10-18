@@ -3,7 +3,7 @@ package lolhtml
 /*
 #cgo CFLAGS:-I${SRCDIR}/build/include
 #cgo LDFLAGS:-llolhtml
-#cgo !windows LDFLAGS:-lm -ldl
+#cgo !windows LDFLAGS:-lm
 #cgo linux,amd64 LDFLAGS:-L${SRCDIR}/build/linux-x86_64
 #cgo darwin,amd64 LDFLAGS:-L${SRCDIR}/build/macos-x86_64
 #cgo windows,amd64 LDFLAGS:-L${SRCDIR}/build/windows-x86_64
@@ -515,7 +515,7 @@ func (e *Element) InsertBeforeStartTagAsHtml(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
-	errCode := C.lol_html_element_prepend((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), true)
+	errCode := C.lol_html_element_before((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), true)
 	if errCode == 0 {
 		return nil
 	}

@@ -8,15 +8,15 @@ import (
 
 func TestRewriterBuilder(t *testing.T) {
 	rb := lolhtml.NewRewriterBuilder()
-	defer rb.Free()
 	if rb == nil {
 		t.Error("cannot get new rewriter-builder\n")
 	}
+	defer rb.Free()
 	r, err := rb.Build(lolhtml.NewDefaultConfig())
-	defer r.Free()
 	if err != nil {
 		t.Errorf("cannot build rewriter %s\n", err)
 	}
+	defer r.Free()
 	err = r.WriteString("<div>a<")
 	if err != nil {
 		t.Error(err)
@@ -33,10 +33,10 @@ func TestRewriterBuilder(t *testing.T) {
 
 func TestRewriterBuilderNonAsciiEncoding(t *testing.T) {
 	rb := lolhtml.NewRewriterBuilder()
-	defer rb.Free()
 	if rb == nil {
 		t.FailNow()
 	}
+	defer rb.Free()
 	r, err := rb.Build(lolhtml.Config{
 		Encoding: "UTF-16",
 		Memory: &lolhtml.MemorySettings{
@@ -46,26 +46,26 @@ func TestRewriterBuilderNonAsciiEncoding(t *testing.T) {
 		Sink:   func(string) {},
 		Strict: true,
 	})
-	defer r.Free()
 	if err == nil {
 		t.FailNow()
 	}
 	if err.Error() != "Expected ASCII-compatible encoding." {
 		t.Error(err)
 	}
+	r.Free()
 }
 
 func TestRewriterBuilderMemoryLimiting(t *testing.T) {
 	rb := lolhtml.NewRewriterBuilder()
-	defer rb.Free()
 	if rb == nil {
 		t.Error("cannot get new rewriter-builder\n")
 	}
+	defer rb.Free()
 	s, err := lolhtml.NewSelector("span")
-	defer s.Free()
 	if err != nil {
 		t.Error(err)
 	}
+	defer s.Free()
 	rb.AddElementContentHandlers(s, nil, nil, nil)
 	r, err := rb.Build(lolhtml.Config{
 		Encoding: "utf-8",
@@ -76,10 +76,10 @@ func TestRewriterBuilderMemoryLimiting(t *testing.T) {
 		Sink:   func(string) {},
 		Strict: true,
 	})
-	defer r.Free()
 	if err != nil {
 		t.Error(err)
 	}
+	defer r.Free()
 	err = r.WriteString("<span alt='aaaaa")
 	if err.Error() != "The memory limit has been exceeded." {
 		t.Error(err)
@@ -97,10 +97,10 @@ func TestNewSelector(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.selector, func(t *testing.T) {
 			s, err := lolhtml.NewSelector(tc.selector)
-			defer s.Free()
 			if err != nil && err.Error() != tc.errorText {
 				t.Errorf("cannot get new selector: %s\n", err)
 			}
+			s.Free()
 		})
 	}
 }
@@ -129,10 +129,10 @@ func TestDoctypeApi(t *testing.T) {
 		func(*lolhtml.DocEnd) lolhtml.RewriterDirective { return lolhtml.Continue },
 	)
 	r, err := rb.Build(lolhtml.NewDefaultConfig())
-	defer r.Free()
 	if err != nil {
 		t.Error(err)
 	}
+	defer r.Free()
 	err = r.WriteString(`<!DOCTYPE math SYSTEM "http://www.w3.org/Math/DTD/mathml1/mathml.dtd">`)
 	if err != nil {
 		t.Error(err)
@@ -174,10 +174,10 @@ func TestCommentApi(t *testing.T) {
 		},
 		Strict: false,
 	})
-	defer r.Free()
 	if err != nil {
 		t.Error(err)
 	}
+	defer r.Free()
 	err = r.WriteString("<!--Hey 42-->")
 	if err != nil {
 		t.Error(err)
@@ -235,10 +235,10 @@ func TestTextChunkApi(t *testing.T) {
 		},
 		Strict: false,
 	})
-	defer r.Free()
 	if err != nil {
 		t.Error(err)
 	}
+	defer r.Free()
 	err = r.WriteString("Hey 42")
 	if err != nil {
 		t.Error(err)
@@ -283,10 +283,10 @@ func TestDocEndApi(t *testing.T) {
 		},
 		Strict: false,
 	})
-	defer r.Free()
 	if err != nil {
 		t.Error(err)
 	}
+	defer r.Free()
 	err = r.WriteString("")
 	if err != nil {
 		t.Error(err)
@@ -304,10 +304,10 @@ func TestElementApi(t *testing.T) {
 	rb := lolhtml.NewRewriterBuilder()
 	defer rb.Free()
 	s, err := lolhtml.NewSelector("*")
-	defer s.Free()
 	if err != nil {
 		t.Error(err)
 	}
+	defer s.Free()
 	rb.AddElementContentHandlers(
 		s,
 		func(element *lolhtml.Element) lolhtml.RewriterDirective {
@@ -340,10 +340,10 @@ func TestElementApi(t *testing.T) {
 		},
 		Strict: false,
 	})
-	defer r.Free()
 	if err != nil {
 		t.Error(err)
 	}
+	defer r.Free()
 	err = r.WriteString("Hi <div>")
 	if err != nil {
 		t.Error(err)
