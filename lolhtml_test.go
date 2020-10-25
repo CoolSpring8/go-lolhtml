@@ -110,9 +110,9 @@ func TestDoctypeApi(t *testing.T) {
 	defer rb.Free()
 	rb.AddDocumentContentHandlers(
 		func(doctype *lolhtml.Doctype) lolhtml.RewriterDirective {
-			name := doctype.GetName()
-			publicId := doctype.GetPublicId()
-			systemId := doctype.GetSystemId()
+			name := doctype.Name()
+			publicId := doctype.PublicId()
+			systemId := doctype.SystemId()
 			if name != "math" {
 				t.Errorf("wrong doctype name %s\n", name)
 			}
@@ -149,7 +149,7 @@ func TestCommentApi(t *testing.T) {
 	rb.AddDocumentContentHandlers(
 		nil,
 		func(comment *lolhtml.Comment) lolhtml.RewriterDirective {
-			text := comment.GetText()
+			text := comment.Text()
 			if text != "Hey 42" {
 				t.Errorf("wrong text %s\n", text)
 			}
@@ -198,7 +198,7 @@ func TestTextChunkApi(t *testing.T) {
 		nil,
 		nil,
 		func(textChunk *lolhtml.TextChunk) lolhtml.RewriterDirective {
-			content := textChunk.GetContent()
+			content := textChunk.Content()
 			if len(content) > 0 {
 				if textChunk.IsLastInTextNode() {
 					t.Error("text chunk last in text node flag incorrect, expected false, got true")
@@ -259,7 +259,7 @@ func TestDocEndApi(t *testing.T) {
 		nil,
 		nil,
 		nil,
-		func(docEnd *lolhtml.DocEnd) lolhtml.RewriterDirective {
+		func(docEnd *lolhtml.DocumentEnd) lolhtml.RewriterDirective {
 			err := docEnd.AppendAsHtml("<!--appended text-->")
 			if err != nil {
 				t.Error(err)
@@ -311,7 +311,7 @@ func TestElementApi(t *testing.T) {
 	rb.AddElementContentHandlers(
 		s,
 		func(element *lolhtml.Element) lolhtml.RewriterDirective {
-			name := element.GetTagName()
+			name := element.TagName()
 			if name != "div" {
 				t.Errorf("get wrong tag name %s\n", name)
 			}

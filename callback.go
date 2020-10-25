@@ -14,7 +14,7 @@ extern lol_html_rewriter_directive_t callbackTextChunk(lol_html_text_chunk_t *te
 
 extern lol_html_rewriter_directive_t callbackElement(lol_html_element_t *element, void *user_data);
 
-extern lol_html_rewriter_directive_t callbackDocEnd(lol_html_doc_end_t *doc_end, void *user_data);
+extern lol_html_rewriter_directive_t callbackDocumentEnd(lol_html_doc_end_t *doc_end, void *user_data);
 
 void callback_sink(const char *chunk, size_t chunk_len, void *user_data) {
     return callbackSink(chunk, chunk_len, user_data);
@@ -37,7 +37,7 @@ lol_html_rewriter_directive_t callback_element(lol_html_element_t *element, void
 }
 
 lol_html_rewriter_directive_t callback_doc_end(lol_html_doc_end_t *doc_end, void *user_data) {
-    return callbackDocEnd(doc_end, user_data);
+    return callbackDocumentEnd(doc_end, user_data);
 }
 */
 import "C"

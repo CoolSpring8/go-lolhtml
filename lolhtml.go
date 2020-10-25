@@ -43,8 +43,8 @@ type Rewriter C.lol_html_rewriter_t
 // Doctype as declared in include/lol_html.h:24
 type Doctype C.lol_html_doctype_t
 
-// DocEnd as declared in include/lol_html.h:25
-type DocEnd C.lol_html_doc_end_t
+// DocumentEnd as declared in include/lol_html.h:25
+type DocumentEnd C.lol_html_doc_end_t
 
 // Comment as declared in include/lol_html.h:26
 type Comment C.lol_html_comment_t
@@ -84,8 +84,8 @@ type TextChunkHandler func(*TextChunk) RewriterDirective
 // ElementHandler type as declared in include/lol_html.h:101
 type ElementHandler func(*Element) RewriterDirective
 
-// DocEndHandler type as declared in include/lol_html.h:106
-type DocEndHandler func(*DocEnd) RewriterDirective
+// DocumentEndHandler type as declared in include/lol_html.h:106
+type DocumentEndHandler func(*DocumentEnd) RewriterDirective
 
 type Config struct {
 	Encoding string
@@ -128,9 +128,9 @@ func (rb *RewriterBuilder) AddDocumentContentHandlers(
 	doctypeHandler DoctypeHandler,
 	commentHandler CommentHandler,
 	textChunkHandler TextChunkHandler,
-	docEndHandler DocEndHandler,
+	documentEndHandler DocumentEndHandler,
 ) {
-	var cCallbackDoctypePointer, cCallbackCommentPointer, cCallbackTextChunkPointer, cCallbackDocEndPointer *[0]byte
+	var cCallbackDoctypePointer, cCallbackCommentPointer, cCallbackTextChunkPointer, cCallbackDocumentEndPointer *[0]byte
 	if doctypeHandler != nil {
 		cCallbackDoctypePointer = (*[0]byte)(C.callback_doctype)
 	}
@@ -140,13 +140,13 @@ func (rb *RewriterBuilder) AddDocumentContentHandlers(
 	if textChunkHandler != nil {
 		cCallbackTextChunkPointer = (*[0]byte)(C.callback_text_chunk)
 	}
-	if docEndHandler != nil {
-		cCallbackDocEndPointer = (*[0]byte)(C.callback_doc_end)
+	if documentEndHandler != nil {
+		cCallbackDocumentEndPointer = (*[0]byte)(C.callback_doc_end)
 	}
 	doctypeHandlerPointer := pointer.Save(doctypeHandler)
 	commentHandlerPointer := pointer.Save(commentHandler)
 	textChunkHandlerPointer := pointer.Save(textChunkHandler)
-	docEndHandlerPointer := pointer.Save(docEndHandler)
+	documentEndHandlerPointer := pointer.Save(documentEndHandler)
 	C.lol_html_rewriter_builder_add_document_content_handlers(
 		(*C.lol_html_rewriter_builder_t)(rb),
 		cCallbackDoctypePointer,
@@ -155,8 +155,8 @@ func (rb *RewriterBuilder) AddDocumentContentHandlers(
 		commentHandlerPointer,
 		cCallbackTextChunkPointer,
 		textChunkHandlerPointer,
-		cCallbackDocEndPointer,
-		docEndHandlerPointer,
+		cCallbackDocumentEndPointer,
+		documentEndHandlerPointer,
 	)
 }
 
@@ -242,19 +242,19 @@ func (r *Rewriter) Free() {
 	}
 }
 
-func (d *Doctype) GetName() string {
+func (d *Doctype) Name() string {
 	nameC := (*str)(C.lol_html_doctype_name_get((*C.lol_html_doctype_t)(d)))
 	defer nameC.Free()
 	return strToGoString(nameC)
 }
 
-func (d *Doctype) GetPublicId() string {
+func (d *Doctype) PublicId() string {
 	nameC := (*str)(C.lol_html_doctype_public_id_get((*C.lol_html_doctype_t)(d)))
 	defer nameC.Free()
 	return strToGoString(nameC)
 }
 
-func (d *Doctype) GetSystemId() string {
+func (d *Doctype) SystemId() string {
 	nameC := (*str)(C.lol_html_doctype_system_id_get((*C.lol_html_doctype_t)(d)))
 	defer nameC.Free()
 	return strToGoString(nameC)
@@ -262,9 +262,9 @@ func (d *Doctype) GetSystemId() string {
 
 //func (d* Doctype) SetUserData(){}
 
-//func (d* Doctype) GetUserData(){}
+//func (d* Doctype) UserData(){}
 
-func (c *Comment) GetText() string {
+func (c *Comment) Text() string {
 	textC := (str)(C.lol_html_comment_text_get((*C.lol_html_comment_t)(c)))
 	defer textC.Free()
 	return strToGoString2(textC)
@@ -355,7 +355,7 @@ func (c *Comment) IsRemoved() bool {
 	return (bool)(C.lol_html_comment_is_removed((*C.lol_html_comment_t)(c)))
 }
 
-func (t *TextChunk) GetContent() string {
+func (t *TextChunk) Content() string {
 	text := (TextChunkContent)(C.lol_html_text_chunk_content_get((*C.lol_html_text_chunk_t)(t)))
 	return textChunkContentToGoString(text)
 }
@@ -438,7 +438,7 @@ func (t *TextChunk) IsRemoved() bool {
 	return (bool)(C.lol_html_text_chunk_is_removed((*C.lol_html_text_chunk_t)(t)))
 }
 
-func (e *Element) GetTagName() string {
+func (e *Element) TagName() string {
 	tagNameC := (str)(C.lol_html_element_tag_name_get((*C.lol_html_element_t)(e)))
 	defer tagNameC.Free()
 	return strToGoString2(tagNameC)
@@ -455,16 +455,16 @@ func (e *Element) SetTagName(name string) error {
 	return getError()
 }
 
-func (e *Element) GetNamespaceUri() string {
+func (e *Element) NamespaceUri() string {
 	namespaceUriC := C.lol_html_element_namespace_uri_get((*C.lol_html_element_t)(e))
 	return C.GoString(namespaceUriC)
 }
 
-func (e *Element) GetAttributeIterator() *AttributeIterator {
+func (e *Element) AttributeIterator() *AttributeIterator {
 	return (*AttributeIterator)(C.lol_html_attributes_iterator_get((*C.lol_html_element_t)(e)))
 }
 
-func (e *Element) GetAttributeValue(name string) (string, error) {
+func (e *Element) AttributeValue(name string) (string, error) {
 	nameC := C.CString(name)
 	defer C.free(unsafe.Pointer(nameC))
 	nameLen := len(name)
@@ -675,19 +675,19 @@ func (ai *AttributeIterator) Next() *Attribute {
 	return (*Attribute)(C.lol_html_attributes_iterator_next((*C.lol_html_attributes_iterator_t)(ai)))
 }
 
-func (a *Attribute) GetName() string {
+func (a *Attribute) Name() string {
 	nameC := (str)(C.lol_html_attribute_name_get((*C.lol_html_attribute_t)(a)))
 	defer nameC.Free()
 	return strToGoString2(nameC)
 }
 
-func (a *Attribute) GetValue() string {
+func (a *Attribute) Value() string {
 	valueC := (str)(C.lol_html_attribute_value_get((*C.lol_html_attribute_t)(a)))
 	defer valueC.Free()
 	return strToGoString2(valueC)
 }
 
-func (d *DocEnd) AppendAsRaw(content string) error {
+func (d *DocumentEnd) AppendAsRaw(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
@@ -698,7 +698,7 @@ func (d *DocEnd) AppendAsRaw(content string) error {
 	return getError()
 }
 
-func (d *DocEnd) AppendAsHtml(content string) error {
+func (d *DocumentEnd) AppendAsHtml(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
@@ -763,10 +763,10 @@ func callbackElement(element *Element, userData unsafe.Pointer) RewriterDirectiv
 	return cb(element)
 }
 
-//export callbackDocEnd
-func callbackDocEnd(docEnd *DocEnd, userData unsafe.Pointer) RewriterDirective {
-	cb := pointer.Restore(userData).(DocEndHandler)
-	return cb(docEnd)
+//export callbackDocumentEnd
+func callbackDocumentEnd(documentEnd *DocumentEnd, userData unsafe.Pointer) RewriterDirective {
+	cb := pointer.Restore(userData).(DocumentEndHandler)
+	return cb(documentEnd)
 }
 
 // strToGoString is a helper function that translates the underlying-library-defined lol_html_str_t data to Go string.
