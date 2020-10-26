@@ -20,89 +20,58 @@ import "C"
 import (
 	"errors"
 	"github.com/mattn/go-pointer"
+	"io"
 	"unsafe"
 )
 
 var ErrCannotGetErrorMessage = errors.New("cannot get error message from underlying lol-html lib")
 
-// RewriterDirective as declared in include/lol_html.h:84
 type RewriterDirective int
 
-// RewriterDirective enumeration from include/lol_html.h:84
 const (
 	Continue RewriterDirective = iota
 	Stop
 )
 
-// RewriterBuilder as declared in include/lol_html.h:22
-type RewriterBuilder C.lol_html_rewriter_builder_t
+type rewriterBuilder C.lol_html_rewriter_builder_t
 
-// Rewriter as declared in include/lol_html.h:23
 type Rewriter C.lol_html_rewriter_t
 
-// Doctype as declared in include/lol_html.h:24
 type Doctype C.lol_html_doctype_t
-
-// DocumentEnd as declared in include/lol_html.h:25
 type DocumentEnd C.lol_html_doc_end_t
-
-// Comment as declared in include/lol_html.h:26
 type Comment C.lol_html_comment_t
-
-// TextChunk as declared in include/lol_html.h:27
 type TextChunk C.lol_html_text_chunk_t
-
-// Element as declared in include/lol_html.h:28
 type Element C.lol_html_element_t
-
-// AttributeIterator as declared in include/lol_html.h:29
 type AttributeIterator C.lol_html_attributes_iterator_t
-
-// Attribute as declared in include/lol_html.h:30
 type Attribute C.lol_html_attribute_t
 
-// Selector as declared in include/lol_html.h:31
-type Selector C.lol_html_selector_t
-
-// str as declared in include/lol_html.h:45
+type selector C.lol_html_selector_t
 type str C.lol_html_str_t
+type textChunkContent C.lol_html_text_chunk_content_t
 
-// TextChunkContent as declared in include/lol_html.h:60
-type TextChunkContent C.lol_html_text_chunk_content_t
+type OutputSink func([]byte)
 
-type OutputSink func(string)
-
-// DoctypeHandler type as declared in include/lol_html.h:86
-type DoctypeHandler func(*Doctype) RewriterDirective
-
-// CommentHandler type as declared in include/lol_html.h:91
-type CommentHandler func(*Comment) RewriterDirective
-
-// TextChunkHandler type as declared in include/lol_html.h:96
-type TextChunkHandler func(*TextChunk) RewriterDirective
-
-// ElementHandler type as declared in include/lol_html.h:101
-type ElementHandler func(*Element) RewriterDirective
-
-// DocumentEndHandler type as declared in include/lol_html.h:106
-type DocumentEndHandler func(*DocumentEnd) RewriterDirective
+type DoctypeHandlerFunc func(*Doctype) RewriterDirective
+type CommentHandlerFunc func(*Comment) RewriterDirective
+type TextChunkHandlerFunc func(*TextChunk) RewriterDirective
+type ElementHandlerFunc func(*Element) RewriterDirective
+type DocumentEndHandlerFunc func(*DocumentEnd) RewriterDirective
 
 type Config struct {
 	Encoding string
 	Memory   *MemorySettings
 	Sink     OutputSink
-	//UserData interface{}
-	Strict bool
+	Strict   bool
 }
 
-func NewDefaultConfig() Config {
+func newDefaultConfig() Config {
 	return Config{
 		Encoding: "utf-8",
 		Memory: &MemorySettings{
 			PreallocatedParsingBufferSize: 1024,
 			MaxAllowedMemoryUsage:         1<<63 - 1,
 		},
-		Sink:   func(string) {},
+		Sink:   func([]byte) {},
 		Strict: true,
 	}
 }
@@ -112,23 +81,125 @@ type MemorySettings struct {
 	MaxAllowedMemoryUsage         int
 }
 
-func NewRewriterBuilder() *RewriterBuilder {
-	return (*RewriterBuilder)(C.lol_html_rewriter_builder_new())
+type DocumentContentHandler struct {
+	DoctypeHandler     DoctypeHandlerFunc
+	CommentHandler     CommentHandlerFunc
+	TextChunkHandler   TextChunkHandlerFunc
+	DocumentEndHandler DocumentEndHandlerFunc
 }
 
-func (rb *RewriterBuilder) Free() {
+type ElementContentHandler struct {
+	Selector         string
+	ElementHandler   ElementHandlerFunc
+	CommentHandler   CommentHandlerFunc
+	TextChunkHandler TextChunkHandlerFunc
+}
+
+type Handlers struct {
+	DocumentContentHandler []DocumentContentHandler
+	ElementContentHandler  []ElementContentHandler
+}
+
+type Writer struct {
+	w io.Writer
+	r *Rewriter
+}
+
+func NewWriter(w io.Writer, handlers *Handlers, config ...Config) (*Writer, error) {
+	var c Config
+	var sink OutputSink
+	if config != nil {
+		c = config[0]
+		if c.Sink != nil {
+			sink = c.Sink
+		} else if w == nil {
+			sink = func([]byte) {}
+		} else {
+			sink = func(p []byte) {
+				_, _ = w.Write(p)
+			}
+		}
+	} else {
+		c = newDefaultConfig()
+		if w == nil {
+			sink = func([]byte) {}
+		} else {
+			sink = func(p []byte) {
+				_, _ = w.Write(p)
+			}
+		}
+	}
+
+	rb := newRewriterBuilder()
+	var selectors []*selector
+	if handlers != nil {
+		for _, dh := range handlers.DocumentContentHandler {
+			rb.AddDocumentContentHandlers(
+				dh.DoctypeHandler,
+				dh.CommentHandler,
+				dh.TextChunkHandler,
+				dh.DocumentEndHandler,
+			)
+		}
+		for _, eh := range handlers.ElementContentHandler {
+			s, err := newSelector(eh.Selector)
+			if err != nil {
+				return nil, err
+			}
+			selectors = append(selectors, s)
+			rb.AddElementContentHandlers(
+				s,
+				eh.ElementHandler,
+				eh.CommentHandler,
+				eh.TextChunkHandler,
+			)
+		}
+	}
+	r, err := rb.Build(sink, c)
+	if err != nil {
+		return nil, err
+	}
+	rb.Free()
+	for _, s := range selectors {
+		s.Free()
+	}
+
+	return &Writer{w, r}, nil
+}
+
+func (w Writer) Write(p []byte) (n int, err error) {
+	return w.r.Write(p)
+}
+
+func (w Writer) WriteString(s string) (n int, err error) {
+	return w.r.WriteString(s)
+}
+
+func (w *Writer) Free() {
+	if w != nil {
+		w.r.Free()
+	}
+}
+
+func (w *Writer) End() error {
+	return w.r.End()
+}
+
+func newRewriterBuilder() *rewriterBuilder {
+	return (*rewriterBuilder)(C.lol_html_rewriter_builder_new())
+}
+
+func (rb *rewriterBuilder) Free() {
 	if rb != nil {
 		C.lol_html_rewriter_builder_free((*C.lol_html_rewriter_builder_t)(rb))
 	}
 }
 
-// TODO: BUG? For now, to use *Rewriter.End() without causing panic, you will probably need to assign
-// a stub handler function to it.
-func (rb *RewriterBuilder) AddDocumentContentHandlers(
-	doctypeHandler DoctypeHandler,
-	commentHandler CommentHandler,
-	textChunkHandler TextChunkHandler,
-	documentEndHandler DocumentEndHandler,
+func (rb *rewriterBuilder) AddDocumentContentHandlers(
+	doctypeHandler DoctypeHandlerFunc,
+	commentHandler CommentHandlerFunc,
+	textChunkHandler TextChunkHandlerFunc,
+	documentEndHandler DocumentEndHandlerFunc,
 ) {
 	var cCallbackDoctypePointer, cCallbackCommentPointer, cCallbackTextChunkPointer, cCallbackDocumentEndPointer *[0]byte
 	if doctypeHandler != nil {
@@ -160,11 +231,11 @@ func (rb *RewriterBuilder) AddDocumentContentHandlers(
 	)
 }
 
-func (rb *RewriterBuilder) AddElementContentHandlers(
-	selector *Selector,
-	elementHandler ElementHandler,
-	commentHandler CommentHandler,
-	textChunkHandler TextChunkHandler,
+func (rb *rewriterBuilder) AddElementContentHandlers(
+	selector *selector,
+	elementHandler ElementHandlerFunc,
+	commentHandler CommentHandlerFunc,
+	textChunkHandler TextChunkHandlerFunc,
 ) {
 	var cCallbackElementPointer, cCallbackCommentPointer, cCallbackTextChunkPointer *[0]byte
 	if elementHandler != nil {
@@ -191,7 +262,7 @@ func (rb *RewriterBuilder) AddElementContentHandlers(
 	)
 }
 
-func (rb *RewriterBuilder) Build(config Config) (*Rewriter, error) {
+func (rb *rewriterBuilder) Build(sink OutputSink, config Config) (*Rewriter, error) {
 	encodingC := C.CString(config.Encoding)
 	defer C.free(unsafe.Pointer(encodingC))
 	encodingLen := len(config.Encoding)
@@ -199,7 +270,7 @@ func (rb *RewriterBuilder) Build(config Config) (*Rewriter, error) {
 		preallocated_parsing_buffer_size: C.size_t(config.Memory.PreallocatedParsingBufferSize),
 		max_allowed_memory_usage:         C.size_t(config.Memory.MaxAllowedMemoryUsage),
 	}
-	p := pointer.Save(config.Sink)
+	p := pointer.Save(sink)
 	r := (*Rewriter)(C.lol_html_rewriter_build(
 		(*C.lol_html_rewriter_builder_t)(rb),
 		encodingC,
@@ -215,17 +286,19 @@ func (rb *RewriterBuilder) Build(config Config) (*Rewriter, error) {
 	return nil, getError()
 }
 
-//func (r *Rewriter) Write(b [] byte) error {}
+func (r *Rewriter) Write(p []byte) (n int, err error) {
+	return r.WriteString(string(p))
+}
 
-func (r *Rewriter) WriteString(chunk string) error {
+func (r *Rewriter) WriteString(chunk string) (n int, err error) {
 	chunkC := C.CString(chunk)
 	defer C.free(unsafe.Pointer(chunkC))
 	chunkLen := len(chunk)
 	errCode := C.lol_html_rewriter_write((*C.lol_html_rewriter_t)(r), chunkC, C.size_t(chunkLen))
 	if errCode == 0 {
-		return nil
+		return chunkLen, nil
 	}
-	return getError()
+	return 0, getError()
 }
 
 func (r *Rewriter) End() error {
@@ -356,7 +429,7 @@ func (c *Comment) IsRemoved() bool {
 }
 
 func (t *TextChunk) Content() string {
-	text := (TextChunkContent)(C.lol_html_text_chunk_content_get((*C.lol_html_text_chunk_t)(t)))
+	text := (textChunkContent)(C.lol_html_text_chunk_content_get((*C.lol_html_text_chunk_t)(t)))
 	return textChunkContentToGoString(text)
 }
 
@@ -709,18 +782,18 @@ func (d *DocumentEnd) AppendAsHtml(content string) error {
 	return getError()
 }
 
-func NewSelector(selector string) (*Selector, error) {
-	selectorC := C.CString(selector)
+func newSelector(cssSelector string) (*selector, error) {
+	selectorC := C.CString(cssSelector)
 	defer C.free(unsafe.Pointer(selectorC))
-	selectorLen := len(selector)
-	s := (*Selector)(C.lol_html_selector_parse(selectorC, C.size_t(selectorLen)))
+	selectorLen := len(cssSelector)
+	s := (*selector)(C.lol_html_selector_parse(selectorC, C.size_t(selectorLen)))
 	if s != nil {
 		return s, nil
 	}
 	return nil, getError()
 }
 
-func (s *Selector) Free() {
+func (s *selector) Free() {
 	if s != nil {
 		C.lol_html_selector_free((*C.lol_html_selector_t)(s))
 	}
@@ -734,38 +807,38 @@ func (s *str) Free() {
 
 //export callbackSink
 func callbackSink(chunk *C.char, chunkLen C.size_t, userData unsafe.Pointer) {
-	c := C.GoStringN(chunk, C.int(chunkLen))
+	c := C.GoBytes(unsafe.Pointer(chunk), C.int(chunkLen))
 	cb := pointer.Restore(userData).(OutputSink)
 	cb(c)
 }
 
 //export callbackDoctype
 func callbackDoctype(doctype *Doctype, userData unsafe.Pointer) RewriterDirective {
-	cb := pointer.Restore(userData).(DoctypeHandler)
+	cb := pointer.Restore(userData).(DoctypeHandlerFunc)
 	return cb(doctype)
 }
 
 //export callbackComment
 func callbackComment(comment *Comment, userData unsafe.Pointer) RewriterDirective {
-	cb := pointer.Restore(userData).(CommentHandler)
+	cb := pointer.Restore(userData).(CommentHandlerFunc)
 	return cb(comment)
 }
 
 //export callbackTextChunk
 func callbackTextChunk(textChunk *TextChunk, userData unsafe.Pointer) RewriterDirective {
-	cb := pointer.Restore(userData).(TextChunkHandler)
+	cb := pointer.Restore(userData).(TextChunkHandlerFunc)
 	return cb(textChunk)
 }
 
 //export callbackElement
 func callbackElement(element *Element, userData unsafe.Pointer) RewriterDirective {
-	cb := pointer.Restore(userData).(ElementHandler)
+	cb := pointer.Restore(userData).(ElementHandlerFunc)
 	return cb(element)
 }
 
 //export callbackDocumentEnd
 func callbackDocumentEnd(documentEnd *DocumentEnd, userData unsafe.Pointer) RewriterDirective {
-	cb := pointer.Restore(userData).(DocumentEndHandler)
+	cb := pointer.Restore(userData).(DocumentEndHandlerFunc)
 	return cb(documentEnd)
 }
 
@@ -773,6 +846,7 @@ func callbackDocumentEnd(documentEnd *DocumentEnd, userData unsafe.Pointer) Rewr
 // It is the caller's responsibility to arrange for lol_html_str_t to be freed,
 // by calling str.Free() or lol_html_str_free().
 // Potential issue: lol_html_str_t->len from size_t (uint) to int (int32) on 32-bit machines?
+// TODO: rename to String() to implement Stringer?
 func strToGoString(s *str) string {
 	if s == nil {
 		return ""
@@ -789,8 +863,8 @@ func strToGoString2(s str) string {
 	return C.GoStringN(s.data, C.int(s.len))
 }
 
-func textChunkContentToGoString(s TextChunkContent) string {
-	var nullTextChunkContent TextChunkContent
+func textChunkContentToGoString(s textChunkContent) string {
+	var nullTextChunkContent textChunkContent
 	if s == nullTextChunkContent {
 		return ""
 	}
