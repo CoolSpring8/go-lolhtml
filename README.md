@@ -23,46 +23,48 @@ For other platforms, you'll have to compile it yourself.
 Now let's initialize a project and create `main.go`:
 
 ```go
-package main
-
 import (
-    "fmt"
-    "github.com/coolspring8/go-lolhtml"
+	"bytes"
+	"github.com/coolspring8/go-lolhtml"
+	"io"
+	"log"
+	"os"
 )
 
-func main() {
-	rb := lolhtml.NewRewriterBuilder()
-	defer rb.Free()
-	s, _ := lolhtml.NewSelector("span")
-	defer s.Free()
-	rb.AddElementContentHandlers(
-		s,
-		func(e *lolhtml.Element) lolhtml.RewriterDirective {
-			e.SetInnerContentAsRaw("LOL-HTML")
-			return lolhtml.Continue
-		},
-		nil,
-		nil,
-	)
-	r, _ := rb.Build(
-		lolhtml.Config{
-			Encoding: "utf-8",
-			Memory: &lolhtml.MemorySettings{
-				PreallocatedParsingBufferSize: 1024,
-				MaxAllowedMemoryUsage:         1<<63 - 1,
+func ExampleNewWriter() {
+	chunk := []byte("Hello, <span>World</span>!")
+	r := bytes.NewReader(chunk)
+	w, err := lolhtml.NewWriter(
+		os.Stdout,
+		&lolhtml.Handlers{
+			ElementContentHandler: []lolhtml.ElementContentHandler{
+				{
+					Selector: "span",
+					ElementHandler: func(e *lolhtml.Element) lolhtml.RewriterDirective {
+						err := e.SetInnerContentAsRaw("LOL-HTML")
+						if err != nil {
+							log.Fatal(err)
+						}
+						return lolhtml.Continue
+					},
+				},
 			},
-			Sink:   func(s string) { fmt.Print(s) },
-			Strict: true,
 		},
 	)
-	defer r.Free()
-	r.WriteString("Hello, <span>")
-	r.WriteString("World</span>!")
-	r.End()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer w.Free()
+
+	_, err = io.Copy(w, r)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Output: Hello, <span>LOL-HTML</span>!
 }
 ```
 
-The above program takes chunked input `Hello, <span>World</span>!`, rewrites texts in `span` tags to "LOL-HTML" and prints the result to standard output.
+The above program takes the chunk `Hello, <span>World</span>!` as input, is configured to rewrite all texts in `span` tags to "LOL-HTML" and prints the result to standard output.
 
 And the result is `Hello, <span>LOL-HTML</span>!` .
 
@@ -83,4 +85,4 @@ BSD 3-Clause "New" or "Revised" License
 
 This is an unofficial binding.
 
-Cloudflare is a registered trademark of Cloudflare, Inc. Cloudflare name used in this project are for identification purposes only. The project is not associated in any way with Cloudflare Inc.
+Cloudflare is a registered trademark of Cloudflare, Inc. Cloudflare names used in this project are for identification purposes only. The project is not associated in any way with Cloudflare Inc.
