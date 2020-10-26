@@ -23,6 +23,8 @@ For other platforms, you'll have to compile it yourself.
 Now let's initialize a project and create `main.go`:
 
 ```go
+package main
+
 import (
 	"bytes"
 	"github.com/coolspring8/go-lolhtml"
@@ -31,7 +33,7 @@ import (
 	"os"
 )
 
-func ExampleNewWriter() {
+func main() {
 	chunk := []byte("Hello, <span>World</span>!")
 	r := bytes.NewReader(chunk)
 	w, err := lolhtml.NewWriter(
@@ -67,6 +69,8 @@ func ExampleNewWriter() {
 The above program takes the chunk `Hello, <span>World</span>!` as input, is configured to rewrite all texts in `span` tags to "LOL-HTML" and prints the result to standard output.
 
 And the result is `Hello, <span>LOL-HTML</span>!` .
+
+For more examples, explore the `/examples` directory.
 
 ## Documentation
 
