@@ -287,7 +287,17 @@ func (rb *rewriterBuilder) Build(sink OutputSink, config Config) (*Rewriter, err
 }
 
 func (r *Rewriter) Write(p []byte) (n int, err error) {
-	return r.WriteString(string(p))
+	pLen := len(p)
+	// avoid 0-sized array
+	if pLen == 0 {
+		p = []byte("\x00")
+	}
+	pC := (*C.char)(unsafe.Pointer(&p[0]))
+	errCode := C.lol_html_rewriter_write((*C.lol_html_rewriter_t)(r), pC, C.size_t(pLen))
+	if errCode == 0 {
+		return pLen, nil
+	}
+	return 0, getError()
 }
 
 func (r *Rewriter) WriteString(chunk string) (n int, err error) {
