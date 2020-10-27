@@ -34,4 +34,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = w.End()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

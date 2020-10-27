@@ -39,6 +39,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = w.End()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func rewriteUrlInAttribute(e *lolhtml.Element, attributeName string) {

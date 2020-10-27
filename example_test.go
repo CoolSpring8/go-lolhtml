@@ -38,5 +38,10 @@ func ExampleNewWriter() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = w.End()
+	if err != nil {
+		log.Fatal(err)
+	}
 	// Output: Hello, <span>LOL-HTML</span>!
 }
