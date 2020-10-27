@@ -43,7 +43,7 @@ func main() {
 				{
 					Selector: "span",
 					ElementHandler: func(e *lolhtml.Element) lolhtml.RewriterDirective {
-						err := e.SetInnerContentAsRaw("LOL-HTML")
+						err := e.SetInnerContentAsText("LOL-HTML")
 						if err != nil {
 							log.Fatal(err)
 						}

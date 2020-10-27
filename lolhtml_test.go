@@ -186,7 +186,7 @@ func TestTextChunkApi(t *testing.T) {
 							if err != nil {
 								t.Error(err)
 							}
-							err = textChunk.InsertAfterAsRaw("</div>")
+							err = textChunk.InsertAfterAsText("</div>")
 							if err != nil {
 								t.Error(err)
 							}
@@ -231,7 +231,7 @@ func TestDocEndApi(t *testing.T) {
 						if err != nil {
 							t.Error(err)
 						}
-						err = docEnd.AppendAsRaw("hello & world")
+						err = docEnd.AppendAsText("hello & world")
 						if err != nil {
 							t.Error(err)
 						}

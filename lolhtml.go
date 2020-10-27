@@ -1,3 +1,8 @@
+// package lolhtml provides the ability to rewrite or parse HTML on the fly,
+// with CSS-selector based API.
+
+// It is a binding for Rust crate lol_html.
+// https://github.com/cloudflare/lol-html
 package lolhtml
 
 /*
@@ -27,29 +32,42 @@ import (
 
 var ErrCannotGetErrorMessage = errors.New("cannot get error message from underlying lol-html lib")
 
+// RewriterDirective should returned by callback handlers, to inform the rewriter to continue or stop parsing.
 type RewriterDirective int
 
 const (
+	// Let the normal parsing process continue.
 	Continue RewriterDirective = iota
+
+	// Stop the rewriter immediately. Content currently buffered is discarded, and an error is returned.
 	Stop
 )
 
+// rewriterBuilder is used to build a rewriter.
 type rewriterBuilder C.lol_html_rewriter_builder_t
 
-type Rewriter C.lol_html_rewriter_t
+// rewriter represents an actual HTML rewriter.
+// rewriterBuilder, rewriter and selector are kept private to simplify public API.
+// If you find it useful to use them publicly, please inform me.
+type rewriter C.lol_html_rewriter_t
+
+// selector represents a parsed CSS selector.
+type selector C.lol_html_selector_t
 
 type Doctype C.lol_html_doctype_t
 type DocumentEnd C.lol_html_doc_end_t
 type Comment C.lol_html_comment_t
 type TextChunk C.lol_html_text_chunk_t
 type Element C.lol_html_element_t
+// AttributeIterator cannot be iterated by "range" syntax. You should use AttributeIterator.Next() instead.
 type AttributeIterator C.lol_html_attributes_iterator_t
 type Attribute C.lol_html_attribute_t
 
-type selector C.lol_html_selector_t
 type str C.lol_html_str_t
+// textChunkContent does not need to be de-allocated manually.
 type textChunkContent C.lol_html_text_chunk_content_t
 
+// OutputSink takes each chunked output as a byte slice.
 type OutputSink func([]byte)
 
 type DoctypeHandlerFunc func(*Doctype) RewriterDirective
@@ -58,10 +76,15 @@ type TextChunkHandlerFunc func(*TextChunk) RewriterDirective
 type ElementHandlerFunc func(*Element) RewriterDirective
 type DocumentEndHandlerFunc func(*DocumentEnd) RewriterDirective
 
+// Config defines settings for the rewriter.
 type Config struct {
+	// defaults to "utf-8".
 	Encoding string
+	// defaults to PreallocatedParsingBufferSize: 1024, MaxAllowedMemoryUsage: 1<<63 - 1.
 	Memory   *MemorySettings
+	// defaults to func([]byte) {}. In other words, totally discard output.
 	Sink     OutputSink
+	// defaults to true. If true, bail out for security reasons when ambiguous.
 	Strict   bool
 }
 
@@ -101,6 +124,7 @@ type Handlers struct {
 	ElementContentHandler  []ElementContentHandler
 }
 
+// RewriteString rewrites the given string with the provided Handlers and Config.
 func RewriteString(s string, h *Handlers, config ...Config) (string, error) {
 	var buf bytes.Buffer
 	var w *Writer
@@ -130,9 +154,10 @@ func RewriteString(s string, h *Handlers, config ...Config) (string, error) {
 
 type Writer struct {
 	w io.Writer
-	r *Rewriter
+	r *rewriter
 }
 
+// NewWriter returns a new Writer with Handlers and Config configured, writing to w.
 func NewWriter(w io.Writer, handlers *Handlers, config ...Config) (*Writer, error) {
 	var c Config
 	var sink OutputSink
@@ -290,7 +315,7 @@ func (rb *rewriterBuilder) AddElementContentHandlers(
 	)
 }
 
-func (rb *rewriterBuilder) Build(sink OutputSink, config Config) (*Rewriter, error) {
+func (rb *rewriterBuilder) Build(sink OutputSink, config Config) (*rewriter, error) {
 	encodingC := C.CString(config.Encoding)
 	defer C.free(unsafe.Pointer(encodingC))
 	encodingLen := len(config.Encoding)
@@ -299,7 +324,7 @@ func (rb *rewriterBuilder) Build(sink OutputSink, config Config) (*Rewriter, err
 		max_allowed_memory_usage:         C.size_t(config.Memory.MaxAllowedMemoryUsage),
 	}
 	p := pointer.Save(sink)
-	r := (*Rewriter)(C.lol_html_rewriter_build(
+	r := (*rewriter)(C.lol_html_rewriter_build(
 		(*C.lol_html_rewriter_builder_t)(rb),
 		encodingC,
 		C.size_t(encodingLen),
@@ -314,7 +339,7 @@ func (rb *rewriterBuilder) Build(sink OutputSink, config Config) (*Rewriter, err
 	return nil, getError()
 }
 
-func (r *Rewriter) Write(p []byte) (n int, err error) {
+func (r *rewriter) Write(p []byte) (n int, err error) {
 	pLen := len(p)
 	// avoid 0-sized array
 	if pLen == 0 {
@@ -328,7 +353,7 @@ func (r *Rewriter) Write(p []byte) (n int, err error) {
 	return 0, getError()
 }
 
-func (r *Rewriter) WriteString(chunk string) (n int, err error) {
+func (r *rewriter) WriteString(chunk string) (n int, err error) {
 	chunkC := C.CString(chunk)
 	defer C.free(unsafe.Pointer(chunkC))
 	chunkLen := len(chunk)
@@ -339,7 +364,7 @@ func (r *Rewriter) WriteString(chunk string) (n int, err error) {
 	return 0, getError()
 }
 
-func (r *Rewriter) End() error {
+func (r *rewriter) End() error {
 	errCode := C.lol_html_rewriter_end((*C.lol_html_rewriter_t)(r))
 	if errCode == 0 {
 		return nil
@@ -347,7 +372,7 @@ func (r *Rewriter) End() error {
 	return getError()
 }
 
-func (r *Rewriter) Free() {
+func (r *rewriter) Free() {
 	if r != nil {
 		C.lol_html_rewriter_free((*C.lol_html_rewriter_t)(r))
 	}
@@ -392,7 +417,7 @@ func (c *Comment) SetText(text string) error {
 	return getError()
 }
 
-func (c *Comment) InsertBeforeAsRaw(content string) error {
+func (c *Comment) InsertBeforeAsText(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
@@ -414,7 +439,7 @@ func (c *Comment) InsertBeforeAsHtml(content string) error {
 	return getError()
 }
 
-func (c *Comment) InsertAfterAsRaw(content string) error {
+func (c *Comment) InsertAfterAsText(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
@@ -436,7 +461,7 @@ func (c *Comment) InsertAfterAsHtml(content string) error {
 	return getError()
 }
 
-func (c *Comment) ReplaceAsRaw(content string) error {
+func (c *Comment) ReplaceAsText(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
@@ -475,7 +500,7 @@ func (t *TextChunk) IsLastInTextNode() bool {
 	return (bool)(C.lol_html_text_chunk_is_last_in_text_node((*C.lol_html_text_chunk_t)(t)))
 }
 
-func (t *TextChunk) InsertBeforeAsRaw(content string) error {
+func (t *TextChunk) InsertBeforeAsText(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
@@ -497,7 +522,7 @@ func (t *TextChunk) InsertBeforeAsHtml(content string) error {
 	return getError()
 }
 
-func (t *TextChunk) InsertAfterAsRaw(content string) error {
+func (t *TextChunk) InsertAfterAsText(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
@@ -519,7 +544,7 @@ func (t *TextChunk) InsertAfterAsHtml(content string) error {
 	return getError()
 }
 
-func (t *TextChunk) ReplaceAsRaw(content string) error {
+func (t *TextChunk) ReplaceAsText(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
@@ -634,7 +659,7 @@ func (e *Element) RemoveAttribute(name string) error {
 	return getError()
 }
 
-func (e *Element) InsertBeforeStartTagAsRaw(content string) error {
+func (e *Element) InsertBeforeStartTagAsText(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
@@ -656,7 +681,7 @@ func (e *Element) InsertBeforeStartTagAsHtml(content string) error {
 	return getError()
 }
 
-func (e *Element) InsertAfterStartTagAsRaw(content string) error {
+func (e *Element) InsertAfterStartTagAsText(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
@@ -678,7 +703,7 @@ func (e *Element) InsertAfterStartTagAsHtml(content string) error {
 	return getError()
 }
 
-func (e *Element) InsertBeforeEndTagAsRaw(content string) error {
+func (e *Element) InsertBeforeEndTagAsText(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
@@ -700,7 +725,7 @@ func (e *Element) InsertBeforeEndTagAsHtml(content string) error {
 	return getError()
 }
 
-func (e *Element) InsertAfterEndTagAsRaw(content string) error {
+func (e *Element) InsertAfterEndTagAsText(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
@@ -722,7 +747,7 @@ func (e *Element) InsertAfterEndTagAsHtml(content string) error {
 	return getError()
 }
 
-func (e *Element) SetInnerContentAsRaw(content string) error {
+func (e *Element) SetInnerContentAsText(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
@@ -744,7 +769,7 @@ func (e *Element) SetInnerContentAsHtml(content string) error {
 	return getError()
 }
 
-func (e *Element) ReplaceAsRaw(content string) error {
+func (e *Element) ReplaceAsText(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
@@ -798,7 +823,7 @@ func (a *Attribute) Value() string {
 	return strToGoString2(valueC)
 }
 
-func (d *DocumentEnd) AppendAsRaw(content string) error {
+func (d *DocumentEnd) AppendAsText(content string) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
