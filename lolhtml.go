@@ -1,6 +1,5 @@
 // package lolhtml provides the ability to rewrite or parse HTML on the fly,
 // with CSS-selector based API.
-
 // It is a binding for Rust crate lol_html.
 // https://github.com/cloudflare/lol-html
 package lolhtml
@@ -125,14 +124,14 @@ type Handlers struct {
 }
 
 // RewriteString rewrites the given string with the provided Handlers and Config.
-func RewriteString(s string, h *Handlers, config ...Config) (string, error) {
+func RewriteString(s string, handlers *Handlers, config ...Config) (string, error) {
 	var buf bytes.Buffer
 	var w *Writer
 	var err error
 	if config != nil {
-		w, err = NewWriter(&buf, h, config[0])
+		w, err = NewWriter(&buf, handlers, config[0])
 	} else {
-		w, err = NewWriter(&buf, h)
+		w, err = NewWriter(&buf, handlers)
 	}
 	if err != nil {
 		return "", err
