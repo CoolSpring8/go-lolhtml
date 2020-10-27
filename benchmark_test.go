@@ -225,7 +225,7 @@ func BenchmarkNewWriter(b *testing.B) {
 					}
 
 					r := bytes.NewReader(data)
-					copyBuf := make([]byte, ChunkSize, ChunkSize)
+					copyBuf := make([]byte, ChunkSize)
 					_, err = io.CopyBuffer(w, r, copyBuf)
 					if err != nil {
 						b.Fatal(err)
