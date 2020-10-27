@@ -63,7 +63,7 @@ func main() {
 		log.Fatal(err)
 	}
     
-    err = w.End()
+	err = w.End()
 	if err != nil {
 		log.Fatal(err)
 	}

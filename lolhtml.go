@@ -18,6 +18,7 @@ extern lol_html_rewriter_directive_t callback_doc_end(lol_html_doc_end_t *doc_en
 */
 import "C"
 import (
+	"bytes"
 	"errors"
 	"github.com/mattn/go-pointer"
 	"io"
@@ -98,6 +99,33 @@ type ElementContentHandler struct {
 type Handlers struct {
 	DocumentContentHandler []DocumentContentHandler
 	ElementContentHandler  []ElementContentHandler
+}
+
+func RewriteString(s string, h *Handlers, config ...Config) (string, error) {
+	var buf bytes.Buffer
+	var w *Writer
+	var err error
+	if config != nil {
+		w, err = NewWriter(&buf, h, config[0])
+	} else {
+		w, err = NewWriter(&buf, h)
+	}
+	if err != nil {
+		return "", err
+	}
+	defer w.Free()
+
+	_, err = w.WriteString(s)
+	if err != nil {
+		return "", err
+	}
+
+	err = w.End()
+	if err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
 }
 
 type Writer struct {

@@ -3,10 +3,12 @@ package lolhtml_test
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/coolspring8/go-lolhtml"
 	"io"
 	"log"
 	"os"
+	"strings"
 )
 
 func ExampleNewWriter() {
@@ -44,4 +46,37 @@ func ExampleNewWriter() {
 		log.Fatal(err)
 	}
 	// Output: Hello, <span>LOL-HTML</span>!
+}
+
+func ExampleRewriteString() {
+	output, err := lolhtml.RewriteString(
+		`<div><a href="http://example.com"></a></div>`,
+		&lolhtml.Handlers{
+			ElementContentHandler: []lolhtml.ElementContentHandler{
+				{
+					Selector: "a[href]",
+					ElementHandler: func(e *lolhtml.Element) lolhtml.RewriterDirective {
+						href, err := e.AttributeValue("href")
+						if err != nil {
+							log.Fatal(err)
+						}
+						href = strings.ReplaceAll(href, "http:", "https:")
+
+						err = e.SetAttribute("href", href)
+						if err != nil {
+							log.Fatal(err)
+						}
+
+						return lolhtml.Continue
+					},
+				},
+			},
+		},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(output)
+	// Output: <div><a href="https://example.com"></a></div>
 }
