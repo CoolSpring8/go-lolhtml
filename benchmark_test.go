@@ -241,3 +241,74 @@ func BenchmarkNewWriter(b *testing.B) {
 		}
 	}
 }
+
+// BenchmarkNewRewriterBuilder tests the cost of not caching the RewriterBuilder.
+// In current implementation, every call to NewWriter involves creating a RewriterBuilder.
+// Ideally, if multiple documents are to be processed at the same time, a RewriterBuilder
+// is created in advance and kept in memory, and Rewriter-s could be built from it.
+// This benchmark aims to find out the extent of its impact.
+func BenchmarkNewRewriterBuilder(b *testing.B) {
+	b.Run("Builder", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = lolhtml.NewRewriterBuilder()
+		}
+	})
+	b.Run("BuilderWithFree", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			rb := lolhtml.NewRewriterBuilder()
+			rb.Free()
+		}
+	})
+	b.Run("BuilderWithDocumentHandlerAndFree", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			rb := lolhtml.NewRewriterBuilder()
+			rb.AddDocumentContentHandlers(nil, nil, nil, nil)
+			rb.Free()
+		}
+	})
+	b.Run("BuilderWithElementHandlerAndFree", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			rb := lolhtml.NewRewriterBuilder()
+			s, _ := lolhtml.NewSelector("*")
+			rb.AddElementContentHandlers(s, nil, nil, nil)
+			rb.Free()
+			s.Free()
+		}
+	})
+	b.Run("BuilderWithElementHandlerAndBuildAndFree", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			rb := lolhtml.NewRewriterBuilder()
+			s, _ := lolhtml.NewSelector("*")
+			rb.AddElementContentHandlers(s, nil, nil, nil)
+			_, _ = rb.Build(func([]byte) {}, lolhtml.NewDefaultConfig())
+			rb.Free()
+			s.Free()
+		}
+	})
+	b.Run("BuildMultipleRewriter", func(b *testing.B) {
+		rb := lolhtml.NewRewriterBuilder()
+		s, _ := lolhtml.NewSelector("*")
+		rb.AddElementContentHandlers(s, nil, nil, nil)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			_, _ = rb.Build(func([]byte) {}, lolhtml.NewDefaultConfig())
+		}
+		b.StopTimer()
+		rb.Free()
+		s.Free()
+	})
+	b.Run("Writer", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_, _ = lolhtml.NewWriter(nil,
+				&lolhtml.Handlers{
+					ElementContentHandler: []lolhtml.ElementContentHandler{
+						{
+							Selector:       "*",
+							ElementHandler: nil,
+						},
+					},
+				},
+			)
+		}
+	})
+}

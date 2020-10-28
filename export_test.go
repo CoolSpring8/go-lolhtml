@@ -4,3 +4,5 @@ package lolhtml
 
 var GetError = getError
 var NewSelector = newSelector
+var NewDefaultConfig = newDefaultConfig
+var NewRewriterBuilder = newRewriterBuilder
