@@ -259,18 +259,32 @@ func BenchmarkNewRewriterBuilder(b *testing.B) {
 			rb.Free()
 		}
 	})
-	b.Run("BuilderWithDocumentHandlerAndFree", func(b *testing.B) {
+	b.Run("BuilderWithEmptyDocumentHandlerAndFree", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			rb := lolhtml.NewRewriterBuilder()
 			rb.AddDocumentContentHandlers(nil, nil, nil, nil)
 			rb.Free()
 		}
 	})
-	b.Run("BuilderWithElementHandlerAndFree", func(b *testing.B) {
+	b.Run("BuilderWithEmptyElementHandlerAndFree", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			rb := lolhtml.NewRewriterBuilder()
 			s, _ := lolhtml.NewSelector("*")
 			rb.AddElementContentHandlers(s, nil, nil, nil)
+			rb.Free()
+			s.Free()
+		}
+	})
+	b.Run("BuilderWithElementHandlerAndFree", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			rb := lolhtml.NewRewriterBuilder()
+			s, _ := lolhtml.NewSelector("*")
+			rb.AddElementContentHandlers(
+				s,
+				func(e *lolhtml.Element) lolhtml.RewriterDirective { return lolhtml.Continue },
+				nil,
+				nil,
+			)
 			rb.Free()
 			s.Free()
 		}
@@ -279,7 +293,12 @@ func BenchmarkNewRewriterBuilder(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			rb := lolhtml.NewRewriterBuilder()
 			s, _ := lolhtml.NewSelector("*")
-			rb.AddElementContentHandlers(s, nil, nil, nil)
+			rb.AddElementContentHandlers(
+				s,
+				func(e *lolhtml.Element) lolhtml.RewriterDirective { return lolhtml.Continue },
+				nil,
+				nil,
+			)
 			_, _ = rb.Build(func([]byte) {}, lolhtml.NewDefaultConfig())
 			rb.Free()
 			s.Free()
@@ -288,7 +307,12 @@ func BenchmarkNewRewriterBuilder(b *testing.B) {
 	b.Run("BuildMultipleRewriter", func(b *testing.B) {
 		rb := lolhtml.NewRewriterBuilder()
 		s, _ := lolhtml.NewSelector("*")
-		rb.AddElementContentHandlers(s, nil, nil, nil)
+		rb.AddElementContentHandlers(
+			s,
+			func(e *lolhtml.Element) lolhtml.RewriterDirective { return lolhtml.Continue },
+			nil,
+			nil,
+		)
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, _ = rb.Build(func([]byte) {}, lolhtml.NewDefaultConfig())
@@ -303,8 +327,10 @@ func BenchmarkNewRewriterBuilder(b *testing.B) {
 				&lolhtml.Handlers{
 					ElementContentHandler: []lolhtml.ElementContentHandler{
 						{
-							Selector:       "*",
-							ElementHandler: nil,
+							Selector: "*",
+							ElementHandler: func(e *lolhtml.Element) lolhtml.RewriterDirective {
+								return lolhtml.Continue
+							},
 						},
 					},
 				},
