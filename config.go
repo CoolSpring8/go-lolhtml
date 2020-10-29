@@ -5,7 +5,6 @@ package lolhtml
 */
 import "C"
 import (
-	"github.com/mattn/go-pointer"
 	"unsafe"
 )
 
@@ -63,36 +62,36 @@ type Handlers struct {
 //export callbackSink
 func callbackSink(chunk *C.char, chunkLen C.size_t, userData unsafe.Pointer) {
 	c := C.GoBytes(unsafe.Pointer(chunk), C.int(chunkLen))
-	cb := pointer.Restore(userData).(OutputSink)
+	cb := restorePointer(userData).(OutputSink)
 	cb(c)
 }
 
 //export callbackDoctype
 func callbackDoctype(doctype *Doctype, userData unsafe.Pointer) RewriterDirective {
-	cb := pointer.Restore(userData).(DoctypeHandlerFunc)
+	cb := restorePointer(userData).(DoctypeHandlerFunc)
 	return cb(doctype)
 }
 
 //export callbackComment
 func callbackComment(comment *Comment, userData unsafe.Pointer) RewriterDirective {
-	cb := pointer.Restore(userData).(CommentHandlerFunc)
+	cb := restorePointer(userData).(CommentHandlerFunc)
 	return cb(comment)
 }
 
 //export callbackTextChunk
 func callbackTextChunk(textChunk *TextChunk, userData unsafe.Pointer) RewriterDirective {
-	cb := pointer.Restore(userData).(TextChunkHandlerFunc)
+	cb := restorePointer(userData).(TextChunkHandlerFunc)
 	return cb(textChunk)
 }
 
 //export callbackElement
 func callbackElement(element *Element, userData unsafe.Pointer) RewriterDirective {
-	cb := pointer.Restore(userData).(ElementHandlerFunc)
+	cb := restorePointer(userData).(ElementHandlerFunc)
 	return cb(element)
 }
 
 //export callbackDocumentEnd
 func callbackDocumentEnd(documentEnd *DocumentEnd, userData unsafe.Pointer) RewriterDirective {
-	cb := pointer.Restore(userData).(DocumentEndHandlerFunc)
+	cb := restorePointer(userData).(DocumentEndHandlerFunc)
 	return cb(documentEnd)
 }

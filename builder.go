@@ -13,23 +13,25 @@ extern lol_html_rewriter_directive_t callback_doc_end(lol_html_doc_end_t *doc_en
 import "C"
 import (
 	"unsafe"
-
-	"github.com/mattn/go-pointer"
 )
 
 // rewriterBuilder is used to build a rewriter.
 type rewriterBuilder struct {
 	rb       *C.lol_html_rewriter_builder_t
 	pointers []unsafe.Pointer
+	built    bool // this builder has built at least one writer
 }
 
 func newRewriterBuilder() *rewriterBuilder {
-	return &rewriterBuilder{rb: C.lol_html_rewriter_builder_new(), pointers: nil}
+	return &rewriterBuilder{rb: C.lol_html_rewriter_builder_new(), pointers: nil, built: false}
 }
 
 func (rb *rewriterBuilder) Free() {
 	if rb != nil {
 		C.lol_html_rewriter_builder_free(rb.rb)
+		if !rb.built {
+			unrefPointers(rb.pointers)
+		}
 	}
 }
 
@@ -52,10 +54,10 @@ func (rb *rewriterBuilder) AddDocumentContentHandlers(
 	if documentEndHandler != nil {
 		cCallbackDocumentEndPointer = (*[0]byte)(C.callback_doc_end)
 	}
-	doctypeHandlerPointer := pointer.Save(doctypeHandler)
-	commentHandlerPointer := pointer.Save(commentHandler)
-	textChunkHandlerPointer := pointer.Save(textChunkHandler)
-	documentEndHandlerPointer := pointer.Save(documentEndHandler)
+	doctypeHandlerPointer := savePointer(doctypeHandler)
+	commentHandlerPointer := savePointer(commentHandler)
+	textChunkHandlerPointer := savePointer(textChunkHandler)
+	documentEndHandlerPointer := savePointer(documentEndHandler)
 	C.lol_html_rewriter_builder_add_document_content_handlers(
 		rb.rb,
 		cCallbackDoctypePointer,
@@ -92,9 +94,9 @@ func (rb *rewriterBuilder) AddElementContentHandlers(
 	if textChunkHandler != nil {
 		cCallbackTextChunkPointer = (*[0]byte)(C.callback_text_chunk)
 	}
-	elementHandlerPointer := pointer.Save(elementHandler)
-	commentHandlerPointer := pointer.Save(commentHandler)
-	textChunkHandlerPointer := pointer.Save(textChunkHandler)
+	elementHandlerPointer := savePointer(elementHandler)
+	commentHandlerPointer := savePointer(commentHandler)
+	textChunkHandlerPointer := savePointer(textChunkHandler)
 	C.lol_html_rewriter_builder_add_element_content_handlers(
 		rb.rb,
 		(*C.lol_html_selector_t)(selector),
@@ -116,7 +118,7 @@ func (rb *rewriterBuilder) Build(sink OutputSink, config Config) (*rewriter, err
 		preallocated_parsing_buffer_size: C.size_t(config.Memory.PreallocatedParsingBufferSize),
 		max_allowed_memory_usage:         C.size_t(config.Memory.MaxAllowedMemoryUsage),
 	}
-	p := pointer.Save(sink)
+	p := savePointer(sink)
 	r := C.lol_html_rewriter_build(
 		rb.rb,
 		encodingC,
@@ -127,6 +129,7 @@ func (rb *rewriterBuilder) Build(sink OutputSink, config Config) (*rewriter, err
 		C.bool(config.Strict),
 	)
 	if r != nil {
+		rb.built = true
 		return &rewriter{rw: r, pointers: rb.pointers}, nil
 	}
 	return nil, getError()

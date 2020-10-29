@@ -7,8 +7,6 @@ package lolhtml
 import "C"
 import (
 	"unsafe"
-
-	"github.com/mattn/go-pointer"
 )
 
 // rewriter represents an actual HTML rewriter.
@@ -55,8 +53,6 @@ func (r *rewriter) End() error {
 func (r *rewriter) Free() {
 	if r != nil {
 		C.lol_html_rewriter_free(r.rw)
-		for _, p := range r.pointers {
-			pointer.Unref(p)
-		}
+		unrefPointers(r.pointers)
 	}
 }
