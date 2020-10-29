@@ -3,12 +3,13 @@ package lolhtml_test
 import (
 	"bytes"
 	"fmt"
-	"github.com/coolspring8/go-lolhtml"
 	"io"
 	"io/ioutil"
 	"path/filepath"
 	"runtime"
 	"testing"
+
+	"github.com/coolspring8/go-lolhtml"
 )
 
 const dataDir = "testdata"
@@ -304,7 +305,7 @@ func BenchmarkNewRewriterBuilder(b *testing.B) {
 			s.Free()
 		}
 	})
-	b.Run("BuildMultipleRewriter", func(b *testing.B) {
+	b.Run("BuildMultipleRewriterFromOneBuilder", func(b *testing.B) {
 		rb := lolhtml.NewRewriterBuilder()
 		s, _ := lolhtml.NewSelector("*")
 		rb.AddElementContentHandlers(

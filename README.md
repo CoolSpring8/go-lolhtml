@@ -75,7 +75,7 @@ The above program takes the chunk `Hello, <span>World</span>!` as input, is conf
 
 And the result is `Hello, <span>LOL-HTML</span>!` .
 
-For more examples, explore the `/examples` directory.
+For more examples, please see the `/examples` directory.
 
 ## Documentation
 

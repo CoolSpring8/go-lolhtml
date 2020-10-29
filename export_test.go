@@ -1,6 +1,6 @@
 package lolhtml
 
-// export some internal functions for test
+// just export some internal functions for tests
 
 var GetError = getError
 var NewSelector = newSelector
