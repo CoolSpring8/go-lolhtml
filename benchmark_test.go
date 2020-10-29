@@ -219,8 +219,7 @@ func BenchmarkNewWriter(b *testing.B) {
 				runtime.GC()
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					var buf bytes.Buffer
-					w, err := lolhtml.NewWriter(&buf, bm.handlers)
+					w, err := lolhtml.NewWriter(nil, bm.handlers)
 					if err != nil {
 						b.Fatal(err)
 					}
