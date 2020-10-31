@@ -15,6 +15,7 @@ import (
 type rewriter struct {
 	rw       *C.lol_html_rewriter_t
 	pointers []unsafe.Pointer
+	// TODO: unrecoverable bool
 }
 
 func (r *rewriter) Write(p []byte) (n int, err error) {

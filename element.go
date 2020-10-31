@@ -32,6 +32,7 @@ func (e *Element) SetTagName(name string) error {
 }
 
 func (e *Element) NamespaceUri() string {
+	// don't need to be freed
 	namespaceUriC := C.lol_html_element_namespace_uri_get((*C.lol_html_element_t)(e))
 	return C.GoString(namespaceUriC)
 }
@@ -100,136 +101,90 @@ func (e *Element) RemoveAttribute(name string) error {
 	return getError()
 }
 
-func (e *Element) InsertBeforeStartTagAsText(content string) error {
+type elementAlter int
+
+const (
+	elementInsertBeforeStartTag elementAlter = iota
+	elementInsertAfterStartTag
+	elementInsertBeforeEndTag
+	elementInsertAfterEndTag
+	elementSetInnerContent
+	elementReplace
+)
+
+func (e *Element) alter(content string, alter elementAlter, isHtml bool) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
-	errCode := C.lol_html_element_before((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), false)
+	var errCode C.int
+	switch alter {
+	case elementInsertBeforeStartTag:
+		errCode = C.lol_html_element_before((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), C.bool(isHtml))
+	case elementInsertAfterStartTag:
+		errCode = C.lol_html_element_prepend((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), C.bool(isHtml))
+	case elementInsertBeforeEndTag:
+		errCode = C.lol_html_element_append((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), C.bool(isHtml))
+	case elementInsertAfterEndTag:
+		errCode = C.lol_html_element_after((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), C.bool(isHtml))
+	case elementSetInnerContent:
+		errCode = C.lol_html_element_set_inner_content((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), C.bool(isHtml))
+	case elementReplace:
+		errCode = C.lol_html_element_replace((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), C.bool(isHtml))
+	default:
+		panic("not implemented")
+	}
 	if errCode == 0 {
 		return nil
 	}
 	return getError()
+}
+
+func (e *Element) InsertBeforeStartTagAsText(content string) error {
+	return e.alter(content, elementInsertBeforeStartTag, false)
 }
 
 func (e *Element) InsertBeforeStartTagAsHtml(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_element_before((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), true)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return e.alter(content, elementInsertBeforeStartTag, true)
 }
 
 func (e *Element) InsertAfterStartTagAsText(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_element_prepend((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), false)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return e.alter(content, elementInsertAfterStartTag, false)
 }
 
 func (e *Element) InsertAfterStartTagAsHtml(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_element_prepend((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), true)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return e.alter(content, elementInsertAfterStartTag, true)
 }
 
 func (e *Element) InsertBeforeEndTagAsText(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_element_append((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), false)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return e.alter(content, elementInsertBeforeEndTag, false)
 }
 
 func (e *Element) InsertBeforeEndTagAsHtml(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_element_append((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), true)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return e.alter(content, elementInsertBeforeEndTag, true)
 }
 
 func (e *Element) InsertAfterEndTagAsText(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_element_after((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), false)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return e.alter(content, elementInsertAfterEndTag, false)
 }
 
 func (e *Element) InsertAfterEndTagAsHtml(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_element_after((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), true)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return e.alter(content, elementInsertAfterEndTag, true)
 }
 
 func (e *Element) SetInnerContentAsText(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_element_set_inner_content((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), false)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return e.alter(content, elementSetInnerContent, false)
 }
 
 func (e *Element) SetInnerContentAsHtml(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_element_set_inner_content((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), true)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return e.alter(content, elementSetInnerContent, true)
 }
 
 func (e *Element) ReplaceAsText(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_element_replace((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), false)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return e.alter(content, elementReplace, false)
 }
 
 func (e *Element) ReplaceAsHtml(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_element_replace((*C.lol_html_element_t)(e), contentC, C.size_t(contentLen), true)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return e.alter(content, elementReplace, true)
 }
 
 func (e *Element) Remove() {

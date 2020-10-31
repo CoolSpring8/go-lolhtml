@@ -7,20 +7,18 @@ import (
 	"github.com/coolspring8/go-lolhtml"
 )
 
-func TestDocumentEndApi(t *testing.T) {
-	var b bytes.Buffer
+func TestDocumentEnd_AppendToEmptyDoc(t *testing.T) {
+	var buf bytes.Buffer
 	w, err := lolhtml.NewWriter(
-		&b,
+		&buf,
 		&lolhtml.Handlers{
 			DocumentContentHandler: []lolhtml.DocumentContentHandler{
 				{
 					DocumentEndHandler: func(docEnd *lolhtml.DocumentEnd) lolhtml.RewriterDirective {
-						err := docEnd.AppendAsHtml("<!--appended text-->")
-						if err != nil {
+						if err := docEnd.AppendAsHtml("<!--appended text-->"); err != nil {
 							t.Error(err)
 						}
-						err = docEnd.AppendAsText("hello & world")
-						if err != nil {
+						if err := docEnd.AppendAsText("hello & world"); err != nil {
 							t.Error(err)
 						}
 						return lolhtml.Continue
@@ -33,16 +31,50 @@ func TestDocumentEndApi(t *testing.T) {
 		t.Error(err)
 	}
 	defer w.Free()
-	_, err = w.Write([]byte(""))
+	if _, err = w.Write([]byte("")); err != nil {
+		t.Error(err)
+	}
+	if err = w.End(); err != nil {
+		t.Error(err)
+	}
+	wantedText := "<!--appended text-->hello &amp; world"
+	if finalText := buf.String(); finalText != wantedText {
+		t.Errorf("want %s got %s \n", wantedText, finalText)
+	}
+}
+
+func TestDocumentEnd_AppendAtEnd(t *testing.T) {
+	var buf bytes.Buffer
+	w, err := lolhtml.NewWriter(
+		&buf,
+		&lolhtml.Handlers{
+			DocumentContentHandler: []lolhtml.DocumentContentHandler{
+				{
+					DocumentEndHandler: func(docEnd *lolhtml.DocumentEnd) lolhtml.RewriterDirective {
+						if err := docEnd.AppendAsHtml("<!--appended text-->"); err != nil {
+							t.Error(err)
+						}
+						if err := docEnd.AppendAsText("hello & world"); err != nil {
+							t.Error(err)
+						}
+						return lolhtml.Continue
+					},
+				},
+			},
+		},
+	)
 	if err != nil {
 		t.Error(err)
 	}
-	err = w.End()
-	if err != nil {
+	defer w.Free()
+	if _, err = w.Write([]byte("<html><div>Hello</div></html>")); err != nil {
 		t.Error(err)
 	}
-	finalText := b.String()
-	if finalText != "<!--appended text-->hello &amp; world" {
-		t.Errorf("wrong output %s\n", finalText)
+	if err = w.End(); err != nil {
+		t.Error(err)
+	}
+	wantedText := "<html><div>Hello</div></html><!--appended text-->hello &amp; world"
+	if finalText := buf.String(); finalText != wantedText {
+		t.Errorf("want %s got %s \n", wantedText, finalText)
 	}
 }

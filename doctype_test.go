@@ -6,23 +6,20 @@ import (
 	"github.com/coolspring8/go-lolhtml"
 )
 
-func TestDoctypeApi(t *testing.T) {
+func TestDoctype_GetDoctypeFields(t *testing.T) {
 	w, err := lolhtml.NewWriter(
 		nil,
 		&lolhtml.Handlers{
 			DocumentContentHandler: []lolhtml.DocumentContentHandler{
 				{
 					DoctypeHandler: func(doctype *lolhtml.Doctype) lolhtml.RewriterDirective {
-						name := doctype.Name()
-						publicId := doctype.PublicId()
-						systemId := doctype.SystemId()
-						if name != "math" {
+						if name := doctype.Name(); name != "math" {
 							t.Errorf("wrong doctype name %s\n", name)
 						}
-						if publicId != "" {
+						if publicId := doctype.PublicId(); publicId != "" {
 							t.Errorf("wrong doctype name %s\n", publicId)
 						}
-						if systemId != "http://www.w3.org/Math/DTD/mathml1/mathml.dtd" {
+						if systemId := doctype.SystemId(); systemId != "http://www.w3.org/Math/DTD/mathml1/mathml.dtd" {
 							t.Errorf("wrong doctype name %s\n", systemId)
 						}
 						return lolhtml.Continue
@@ -41,6 +38,32 @@ func TestDoctypeApi(t *testing.T) {
 	}
 	err = w.End()
 	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestDoctype_StopRewriting(t *testing.T) {
+	w, err := lolhtml.NewWriter(
+		nil,
+		&lolhtml.Handlers{
+			DocumentContentHandler: []lolhtml.DocumentContentHandler{
+				{
+					DoctypeHandler: func(d *lolhtml.Doctype) lolhtml.RewriterDirective {
+						return lolhtml.Stop
+					},
+				},
+			},
+		},
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	defer w.Free()
+	_, err = w.Write([]byte("<!doctype>"))
+	if err == nil {
+		t.FailNow()
+	}
+	if err.Error() != "The rewriter has been stopped." {
 		t.Error(err)
 	}
 }

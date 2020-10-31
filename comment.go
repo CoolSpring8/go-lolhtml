@@ -28,70 +28,57 @@ func (c *Comment) SetText(text string) error {
 	return getError()
 }
 
-func (c *Comment) InsertBeforeAsText(content string) error {
+type commentAlter int
+
+const (
+	commentInsertBefore commentAlter = iota
+	commentInsertAfter
+	commentReplace
+)
+
+func (c *Comment) alter(content string, alter commentAlter, isHtml bool) error {
 	contentC := C.CString(content)
 	defer C.free(unsafe.Pointer(contentC))
 	contentLen := len(content)
-	errCode := C.lol_html_comment_before((*C.lol_html_comment_t)(c), contentC, C.size_t(contentLen), false)
+	var errCode C.int
+	switch alter {
+	case commentInsertBefore:
+		errCode = C.lol_html_comment_before((*C.lol_html_comment_t)(c), contentC, C.size_t(contentLen), C.bool(isHtml))
+	case commentInsertAfter:
+		errCode = C.lol_html_comment_after((*C.lol_html_comment_t)(c), contentC, C.size_t(contentLen), C.bool(isHtml))
+	case commentReplace:
+		errCode = C.lol_html_comment_replace((*C.lol_html_comment_t)(c), contentC, C.size_t(contentLen), C.bool(isHtml))
+	default:
+		panic("not implemented")
+	}
 	if errCode == 0 {
 		return nil
 	}
 	return getError()
+}
+
+func (c *Comment) InsertBeforeAsText(content string) error {
+	return c.alter(content, commentInsertAfter, false)
 }
 
 func (c *Comment) InsertBeforeAsHtml(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_comment_before((*C.lol_html_comment_t)(c), contentC, C.size_t(contentLen), true)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return c.alter(content, commentInsertBefore, true)
 }
 
 func (c *Comment) InsertAfterAsText(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_comment_after((*C.lol_html_comment_t)(c), contentC, C.size_t(contentLen), false)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return c.alter(content, commentInsertAfter, false)
 }
 
 func (c *Comment) InsertAfterAsHtml(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_comment_after((*C.lol_html_comment_t)(c), contentC, C.size_t(contentLen), true)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return c.alter(content, commentInsertAfter, true)
 }
 
 func (c *Comment) ReplaceAsText(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_comment_replace((*C.lol_html_comment_t)(c), contentC, C.size_t(contentLen), false)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return c.alter(content, commentReplace, false)
 }
 
 func (c *Comment) ReplaceAsHtml(content string) error {
-	contentC := C.CString(content)
-	defer C.free(unsafe.Pointer(contentC))
-	contentLen := len(content)
-	errCode := C.lol_html_comment_replace((*C.lol_html_comment_t)(c), contentC, C.size_t(contentLen), true)
-	if errCode == 0 {
-		return nil
-	}
-	return getError()
+	return c.alter(content, commentReplace, true)
 }
 
 func (c *Comment) Remove() {
