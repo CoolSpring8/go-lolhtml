@@ -1,10 +1,12 @@
+// Usage: curl -NL https://git.io/JeOSZ | go run main.go
 package main
 
 import (
-	"github.com/coolspring8/go-lolhtml"
 	"io"
 	"log"
 	"os"
+
+	"github.com/coolspring8/go-lolhtml"
 )
 
 func main() {
