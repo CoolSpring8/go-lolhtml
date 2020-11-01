@@ -95,36 +95,29 @@ func handler(w http.ResponseWriter, req *http.Request) {
 	if attr == "" {
 		nextText := make(map[string]string)
 
-		// sort of confusing...
-		// https://stackoverflow.com/questions/27646434/reference-to-another-field-with-in-a-func-in-the-same-struct-in-golang
-		// Are there better ways?
 		for _, s := range selectors {
-			elementContentHandler := &lolhtml.ElementContentHandler{
-				Selector: s,
-			}
-			elementContentHandler.ElementHandler = func(ech *lolhtml.ElementContentHandler) lolhtml.ElementHandlerFunc {
-				return func(e *lolhtml.Element) lolhtml.RewriterDirective {
-					matches[ech.Selector] = append(matches[ech.Selector], textSeparator)
-					nextText[ech.Selector] = ""
-					return lolhtml.Continue
-				}
-			}(elementContentHandler)
-			elementContentHandler.TextChunkHandler = func(ech *lolhtml.ElementContentHandler) lolhtml.TextChunkHandlerFunc {
-				return func(t *lolhtml.TextChunk) lolhtml.RewriterDirective {
-					nextText[ech.Selector] += t.Content()
-					if t.IsLastInTextNode() {
-						if spaced {
-							nextText[ech.Selector] += " "
-						}
-						matches[ech.Selector] = append(matches[ech.Selector], nextText[ech.Selector])
-						nextText[ech.Selector] = ""
-					}
-					return lolhtml.Continue
-				}
-			}(elementContentHandler)
+			s := s
 			handlers.ElementContentHandler = append(
 				handlers.ElementContentHandler,
-				*elementContentHandler,
+				lolhtml.ElementContentHandler{
+					Selector: s,
+					ElementHandler: func(e *lolhtml.Element) lolhtml.RewriterDirective {
+						matches[s] = append(matches[s], textSeparator)
+						nextText[s] = ""
+						return lolhtml.Continue
+					},
+					TextChunkHandler: func(t *lolhtml.TextChunk) lolhtml.RewriterDirective {
+						nextText[s] += t.Content()
+						if t.IsLastInTextNode() {
+							if spaced {
+								nextText[s] += " "
+							}
+							matches[s] = append(matches[s], nextText[s])
+							nextText[s] = ""
+						}
+						return lolhtml.Continue
+					},
+				},
 			)
 		}
 	} else {
@@ -162,7 +155,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	// another confusing point
+	// might be confusing
 	_, err = io.Copy(lolWriter, resp.Body)
 	if err != nil && err.Error() != "The rewriter has been stopped." {
 		sendError(w, http.StatusInternalServerError, err.Error(), pretty)
