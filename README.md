@@ -119,7 +119,7 @@ For more detailed examples, please visit the `/examples` subdirectory.
 
 ## Documentation
 
-Available at [pkg.go.dev](https://pkg.go.dev/github.com/coolspring8/go-lolhtml). (WIP)
+Available at [pkg.go.dev](https://pkg.go.dev/github.com/coolspring8/go-lolhtml).
 
 ## Other Bindings
 
