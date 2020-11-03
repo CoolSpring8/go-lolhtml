@@ -1,5 +1,7 @@
 package lolhtml
 
+// some string types passed by c api, and their helper functions
+
 /*
 #include "lol_html.h"
 */
@@ -27,9 +29,12 @@ func (s *str) String() string {
 	return C.GoStringN(s.data, C.int(s.len))
 }
 
-func textChunkContentToGoString(s textChunkContent) string {
-	var nullTextChunkContent textChunkContent
-	if s == nullTextChunkContent {
+func (s *textChunkContent) String() string {
+	//var nullTextChunkContent textChunkContent
+	//if s == nullTextChunkContent {
+	//	return ""
+	//}
+	if s == nil {
 		return ""
 	}
 	return C.GoStringN(s.data, C.int(s.len))

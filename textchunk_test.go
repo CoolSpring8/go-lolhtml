@@ -26,7 +26,7 @@ func TestTextChunk_InsertBeforeAndAfter(t *testing.T) {
 							if tc.IsRemoved() {
 								t.Error("text chunk removed flag incorrect, expected false, got true")
 							}
-							if err := tc.InsertBeforeAsHtml("<div>"); err != nil {
+							if err := tc.InsertBeforeAsHTML("<div>"); err != nil {
 								t.Error(err)
 							}
 							if err := tc.InsertAfterAsText("</div>"); err != nil {
@@ -46,11 +46,11 @@ func TestTextChunk_InsertBeforeAndAfter(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err := w.Write([]byte("Hey 42")); err != nil {
 		t.Error(err)
 	}
-	if err := w.End(); err != nil {
+	if err := w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<div>Hey 42&lt;/div&gt;"
@@ -68,7 +68,7 @@ func TestTextChunk_Replace(t *testing.T) {
 				{
 					TextChunkHandler: func(tc *lolhtml.TextChunk) lolhtml.RewriterDirective {
 						if len(tc.Content()) > 0 {
-							if err := tc.ReplaceAsHtml("<repl>"); err != nil {
+							if err := tc.ReplaceAsHTML("<repl>"); err != nil {
 								t.Error(err)
 							}
 							if !tc.IsRemoved() {
@@ -84,11 +84,11 @@ func TestTextChunk_Replace(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err := w.Write([]byte("<div>Hello</div>")); err != nil {
 		t.Error(err)
 	}
-	if err := w.End(); err != nil {
+	if err := w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<div><repl></div>"
@@ -106,7 +106,7 @@ func TestTextChunk_InsertAfter(t *testing.T) {
 				{
 					TextChunkHandler: func(tc *lolhtml.TextChunk) lolhtml.RewriterDirective {
 						if len(tc.Content()) > 0 {
-							if err := tc.InsertAfterAsHtml("<after>"); err != nil {
+							if err := tc.InsertAfterAsHTML("<after>"); err != nil {
 								t.Error(err)
 							}
 						}
@@ -119,11 +119,11 @@ func TestTextChunk_InsertAfter(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err := w.Write([]byte("<div>hello</div>")); err != nil {
 		t.Error(err)
 	}
-	if err := w.End(); err != nil {
+	if err := w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<div>hello<after></div>"
@@ -156,11 +156,11 @@ func TestTextChunk_Remove(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err := w.Write([]byte("<span>0_0</span>")); err != nil {
 		t.Error(err)
 	}
-	if err := w.End(); err != nil {
+	if err := w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<span></span>"
@@ -186,7 +186,7 @@ func TestTextChunk_StopRewriting(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	_, err = w.Write([]byte("42"))
 	if err == nil {
 		t.FailNow()
@@ -214,7 +214,7 @@ func TestTextChunk_StopRewritingWithSelector(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	_, err = w.Write([]byte("<div>42</div>"))
 	if err == nil {
 		t.FailNow()

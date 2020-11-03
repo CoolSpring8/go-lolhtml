@@ -35,14 +35,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer w.Free()
 
 	_, err = io.Copy(w, os.Stdin)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = w.End()
+	err = w.Close()
 	if err != nil {
 		log.Fatal(err)
 	}

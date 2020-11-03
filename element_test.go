@@ -39,11 +39,11 @@ func TestElement_ModifyTagName(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err = w.Write([]byte("Hi <div>")); err != nil {
 		t.Error(err)
 	}
-	if err = w.End(); err != nil {
+	if err = w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "Hi <span>"
@@ -109,11 +109,11 @@ func TestElement_ModifyAttributes(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err = w.Write([]byte("<span foo=42>")); err != nil {
 		t.Error(err)
 	}
-	if err = w.End(); err != nil {
+	if err = w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<span bar=\"hey\">"
@@ -134,10 +134,10 @@ func TestElement_InsertContentAroundElement(t *testing.T) {
 						if err := e.InsertBeforeStartTagAsText("&before"); err != nil {
 							t.Error(err)
 						}
-						if err := e.InsertAfterStartTagAsHtml("<!--prepend-->"); err != nil {
+						if err := e.InsertAfterStartTagAsHTML("<!--prepend-->"); err != nil {
 							t.Error(err)
 						}
-						if err := e.InsertBeforeEndTagAsHtml("<!--append-->"); err != nil {
+						if err := e.InsertBeforeEndTagAsHTML("<!--append-->"); err != nil {
 							t.Error(err)
 						}
 						if err := e.InsertAfterEndTagAsText("&after"); err != nil {
@@ -152,11 +152,11 @@ func TestElement_InsertContentAroundElement(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err = w.Write([]byte("<div>Hi</div>")); err != nil {
 		t.Error(err)
 	}
-	if err = w.End(); err != nil {
+	if err = w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "&amp;before<div><!--prepend-->Hi<!--append--></div>&amp;after"
@@ -186,11 +186,11 @@ func TestElement_SetInnerContent(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err = w.Write([]byte("<div><span>42</span></div>")); err != nil {
 		t.Error(err)
 	}
-	if err = w.End(); err != nil {
+	if err = w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<div>hey &amp; ya</div>"
@@ -208,7 +208,7 @@ func TestElement_Replace(t *testing.T) {
 				{
 					Selector: "div",
 					ElementHandler: func(e *lolhtml.Element) lolhtml.RewriterDirective {
-						if err := e.ReplaceAsHtml("hey & ya"); err != nil {
+						if err := e.ReplaceAsHTML("hey & ya"); err != nil {
 							t.Error(err)
 						}
 						return lolhtml.Continue
@@ -220,11 +220,11 @@ func TestElement_Replace(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err = w.Write([]byte("<div><span>42</span></div><h1>Hello<div>good bye</div></h1><h2>Hello2</h2>")); err != nil {
 		t.Error(err)
 	}
-	if err = w.End(); err != nil {
+	if err = w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "hey & ya<h1>Hellohey & ya</h1><h2>Hello2</h2>"
@@ -258,11 +258,11 @@ func TestElement_Remove(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err = w.Write([]byte("<div><span>42</span></div><h1>Hello</h1><h2>Hello2</h2>")); err != nil {
 		t.Error(err)
 	}
-	if err = w.End(); err != nil {
+	if err = w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<div><span>42</span></div><h2>Hello2</h2>"
@@ -296,11 +296,11 @@ func TestElement_RemoveElementAndKeepContent(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err = w.Write([]byte("<div><span>42<h2>Hello1</h2></span></div><h1>Hello</h1><h2>Hello2</h2>")); err != nil {
 		t.Error(err)
 	}
-	if err = w.End(); err != nil {
+	if err = w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<div><span>42Hello1</span></div><h1>Hello</h1>Hello2"
@@ -341,11 +341,11 @@ func TestElement_GetEmptyElementAttribute(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err = w.Write([]byte("<span foo>")); err != nil {
 		t.Error(err)
 	}
-	if err = w.End(); err != nil {
+	if err = w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<span foo>"
@@ -394,11 +394,11 @@ func TestElement_IterateAttributes(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err = w.Write([]byte("<div foo=42 bar='1337'>")); err != nil {
 		t.Error(err)
 	}
-	if err = w.End(); err != nil {
+	if err = w.Close(); err != nil {
 		t.Error(err)
 	}
 }
@@ -412,7 +412,7 @@ func TestElement_AssertNsIsHtml(t *testing.T) {
 					Selector: "script",
 					ElementHandler: func(e *lolhtml.Element) lolhtml.RewriterDirective {
 						wantedText := "http://www.w3.org/1999/xhtml"
-						if ns := e.NamespaceUri(); ns != wantedText {
+						if ns := e.NamespaceURI(); ns != wantedText {
 							t.Errorf("got %s; want %s", ns, wantedText)
 						}
 						return lolhtml.Continue
@@ -424,11 +424,11 @@ func TestElement_AssertNsIsHtml(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err = w.Write([]byte("<script></script>")); err != nil {
 		t.Error(err)
 	}
-	if err = w.End(); err != nil {
+	if err = w.Close(); err != nil {
 		t.Error(err)
 	}
 }
@@ -442,7 +442,7 @@ func TestElement_AssertNsIsSvg(t *testing.T) {
 					Selector: "script",
 					ElementHandler: func(e *lolhtml.Element) lolhtml.RewriterDirective {
 						wantedText := "http://www.w3.org/2000/svg"
-						if ns := e.NamespaceUri(); ns != wantedText {
+						if ns := e.NamespaceURI(); ns != wantedText {
 							t.Errorf("got %s; want %s", ns, wantedText)
 						}
 						return lolhtml.Continue
@@ -454,11 +454,11 @@ func TestElement_AssertNsIsSvg(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err = w.Write([]byte("<svg><script></script></svg>")); err != nil {
 		t.Error(err)
 	}
-	if err = w.End(); err != nil {
+	if err = w.Close(); err != nil {
 		t.Error(err)
 	}
 }
@@ -480,8 +480,15 @@ func TestElement_StopRewriting(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	_, err = w.Write([]byte("<span foo>"))
+	if err == nil {
+		t.FailNow()
+	}
+	if err.Error() != "The rewriter has been stopped." {
+		t.Error(err)
+	}
+	err = w.Close()
 	if err == nil {
 		t.FailNow()
 	}

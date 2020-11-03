@@ -4,17 +4,19 @@ package lolhtml_test
 import (
 	"bytes"
 	"fmt"
-	"github.com/coolspring8/go-lolhtml"
 	"io"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/coolspring8/go-lolhtml"
 )
 
 func ExampleNewWriter() {
 	chunk := []byte("Hello, <span>World</span>!")
 	r := bytes.NewReader(chunk)
 	w, err := lolhtml.NewWriter(
+		// output to stdout
 		os.Stdout,
 		&lolhtml.Handlers{
 			ElementContentHandler: []lolhtml.ElementContentHandler{
@@ -34,14 +36,15 @@ func ExampleNewWriter() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer w.Free()
 
+	// copy from the bytes reader to lolhtml writer
 	_, err = io.Copy(w, r)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = w.End()
+	// explicitly close the writer and flush the remaining content
+	err = w.Close()
 	if err != nil {
 		log.Fatal(err)
 	}

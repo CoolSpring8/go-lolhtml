@@ -1,7 +1,10 @@
-// package lolhtml provides the ability to rewrite or parse HTML on the fly,
+// Package lolhtml provides the ability to parse and rewrite HTML on the fly,
 // with a CSS-selector based API.
+//
 // It is a binding for the Rust crate lol_html.
 // https://github.com/cloudflare/lol-html
+//
+// Please see /examples subdirectory for more detailed examples.
 package lolhtml
 
 /*

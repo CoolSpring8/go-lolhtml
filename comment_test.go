@@ -30,11 +30,11 @@ func TestComment_GetSetText(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err = w.Write([]byte("<!--Hey 42-->")); err != nil {
 		t.Error(err)
 	}
-	if err = w.End(); err != nil {
+	if err = w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<!--Yo-->"
@@ -51,7 +51,7 @@ func TestComment_Replace(t *testing.T) {
 			DocumentContentHandler: []lolhtml.DocumentContentHandler{
 				{
 					CommentHandler: func(c *lolhtml.Comment) lolhtml.RewriterDirective {
-						if err := c.ReplaceAsHtml("<repl>"); err != nil {
+						if err := c.ReplaceAsHTML("<repl>"); err != nil {
 							t.Error(err)
 						}
 						if !c.IsRemoved() {
@@ -66,11 +66,11 @@ func TestComment_Replace(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err := w.Write([]byte("<div><!--hello--></div>")); err != nil {
 		t.Error(err)
 	}
-	if err := w.End(); err != nil {
+	if err := w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<div><repl></div>"
@@ -87,7 +87,7 @@ func TestComment_InsertAfter(t *testing.T) {
 			DocumentContentHandler: []lolhtml.DocumentContentHandler{
 				{
 					CommentHandler: func(c *lolhtml.Comment) lolhtml.RewriterDirective {
-						if err := c.InsertAfterAsHtml("<after>"); err != nil {
+						if err := c.InsertAfterAsHTML("<after>"); err != nil {
 							t.Error(err)
 						}
 						return lolhtml.Continue
@@ -99,11 +99,11 @@ func TestComment_InsertAfter(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err := w.Write([]byte("<div><!--hello--></div>")); err != nil {
 		t.Error(err)
 	}
-	if err := w.End(); err != nil {
+	if err := w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<div><!--hello--><after></div>"
@@ -136,11 +136,11 @@ func TestComment_Remove(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err := w.Write([]byte("<<!--0_0-->>")); err != nil {
 		t.Error(err)
 	}
-	if err := w.End(); err != nil {
+	if err := w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<>"
@@ -157,7 +157,7 @@ func TestComment_InsertBeforeAndAfter(t *testing.T) {
 			DocumentContentHandler: []lolhtml.DocumentContentHandler{
 				{
 					CommentHandler: func(c *lolhtml.Comment) lolhtml.RewriterDirective {
-						if err := c.InsertBeforeAsHtml("<div>"); err != nil {
+						if err := c.InsertBeforeAsHTML("<div>"); err != nil {
 							t.Error(err)
 						}
 						if err := c.InsertAfterAsText("</div>"); err != nil {
@@ -172,11 +172,11 @@ func TestComment_InsertBeforeAndAfter(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err := w.Write([]byte("<!--Hey 42-->")); err != nil {
 		t.Error(err)
 	}
-	if err := w.End(); err != nil {
+	if err := w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<div><!--Hey 42-->&lt;/div&gt;"
@@ -202,7 +202,7 @@ func TestComment_StopRewriting(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	_, err = w.Write([]byte("<div><!-- foo --></div>"))
 	if err == nil {
 		t.FailNow()
@@ -230,7 +230,7 @@ func TestComment_StopRewritingWithSelector(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	_, err = w.Write([]byte("<div><!-- foo --></div>"))
 	if err == nil {
 		t.FailNow()

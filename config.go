@@ -32,14 +32,20 @@ func newDefaultConfig() Config {
 	}
 }
 
+// MemorySettings sets the memory limitations for the rewriter.
 type MemorySettings struct {
-	PreallocatedParsingBufferSize int
-	MaxAllowedMemoryUsage         int
+	PreallocatedParsingBufferSize int // defaults to 1024
+	MaxAllowedMemoryUsage         int // defaults to 1<<63 -1
 }
 
-// OutputSink takes each chunked output as a byte slice and processes it.
+// OutputSink is a callback function where output is written to. A byte slice is passed each time,
+// representing a chunk of output.
+//
+// Exported for special usages which require each output chunk to be identified and processed
+// individually. For most common uses, NewWriter would be more convenient.
 type OutputSink func([]byte)
 
+// DocumentContentHandler is a group of handlers that would be applied to the whole HTML document.
 type DocumentContentHandler struct {
 	DoctypeHandler     DoctypeHandlerFunc
 	CommentHandler     CommentHandlerFunc
@@ -47,6 +53,8 @@ type DocumentContentHandler struct {
 	DocumentEndHandler DocumentEndHandlerFunc
 }
 
+// ElementContentHandler is a group of handlers that would be applied to the content matched by
+// the given selector.
 type ElementContentHandler struct {
 	Selector         string
 	ElementHandler   ElementHandlerFunc
@@ -54,6 +62,8 @@ type ElementContentHandler struct {
 	TextChunkHandler TextChunkHandlerFunc
 }
 
+// Handlers contain DocumentContentHandlers and ElementContentHandlers. Can contain arbitrary numbers
+// of them, including zero (nil slice).
 type Handlers struct {
 	DocumentContentHandler []DocumentContentHandler
 	ElementContentHandler  []ElementContentHandler

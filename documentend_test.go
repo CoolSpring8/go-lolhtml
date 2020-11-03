@@ -15,7 +15,7 @@ func TestDocumentEnd_AppendToEmptyDoc(t *testing.T) {
 			DocumentContentHandler: []lolhtml.DocumentContentHandler{
 				{
 					DocumentEndHandler: func(docEnd *lolhtml.DocumentEnd) lolhtml.RewriterDirective {
-						if err := docEnd.AppendAsHtml("<!--appended text-->"); err != nil {
+						if err := docEnd.AppendAsHTML("<!--appended text-->"); err != nil {
 							t.Error(err)
 						}
 						if err := docEnd.AppendAsText("hello & world"); err != nil {
@@ -30,11 +30,11 @@ func TestDocumentEnd_AppendToEmptyDoc(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err = w.Write([]byte("")); err != nil {
 		t.Error(err)
 	}
-	if err = w.End(); err != nil {
+	if err = w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<!--appended text-->hello &amp; world"
@@ -51,7 +51,7 @@ func TestDocumentEnd_AppendAtEnd(t *testing.T) {
 			DocumentContentHandler: []lolhtml.DocumentContentHandler{
 				{
 					DocumentEndHandler: func(docEnd *lolhtml.DocumentEnd) lolhtml.RewriterDirective {
-						if err := docEnd.AppendAsHtml("<!--appended text-->"); err != nil {
+						if err := docEnd.AppendAsHTML("<!--appended text-->"); err != nil {
 							t.Error(err)
 						}
 						if err := docEnd.AppendAsText("hello & world"); err != nil {
@@ -66,11 +66,11 @@ func TestDocumentEnd_AppendAtEnd(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	if _, err = w.Write([]byte("<html><div>Hello</div></html>")); err != nil {
 		t.Error(err)
 	}
-	if err = w.End(); err != nil {
+	if err = w.Close(); err != nil {
 		t.Error(err)
 	}
 	wantedText := "<html><div>Hello</div></html><!--appended text-->hello &amp; world"

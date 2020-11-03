@@ -130,7 +130,7 @@ func (rb *rewriterBuilder) Build(sink OutputSink, config Config) (*rewriter, err
 	)
 	if r != nil {
 		rb.built = true
-		return &rewriter{rw: r, pointers: rb.pointers}, nil
+		return &rewriter{rewriter: r, pointers: rb.pointers}, nil
 	}
 	return nil, getError()
 }

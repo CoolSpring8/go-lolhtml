@@ -6,7 +6,9 @@ package lolhtml
 import "C"
 import "errors"
 
-var ErrCannotGetErrorMessage = errors.New("cannot get error message from underlying lol-html lib")
+// ErrCannotGetErrorMessage indicates getting error code from lol_html, but unable to acquire the concrete
+// error message.
+var ErrCannotGetErrorMessage = errors.New("cannot get error message from underlying lol_html lib")
 
 // getError is a helper function that gets error message for the last function call.
 // You should make sure there is an error when calling this, or the function interprets

@@ -4,7 +4,7 @@
 // This translation is for demonstration purpose only, so many parts of the code are suboptimal.
 //
 // Sometimes you may get a "different" result, as Go's encoding/json package always sorts the
-// keys of a map (When using multiple selectors), and encodes a nil slice as the null JSON value.
+// keys of a map (when using multiple selectors), and encodes a nil slice as the null JSON value.
 package main
 
 import (
@@ -20,6 +20,7 @@ import (
 )
 
 var (
+	debug            = true
 	listenAddress    = ":80"
 	mainPageFileName = "index.html"
 )
@@ -61,7 +62,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 
 	var spaced bool
 	_spaced := q.Get("spaced")
-	if _spaced == "true" {
+	if _spaced != "" {
 		spaced = true
 	} else {
 		spaced = false
@@ -69,7 +70,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 
 	var pretty bool
 	_pretty := q.Get("pretty")
-	if _pretty == "true" {
+	if _pretty != "" {
 		pretty = true
 	} else {
 		pretty = false
@@ -162,13 +163,12 @@ func handler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if err == nil || err.Error() != "The rewriter has been stopped." {
-		err = lolWriter.End()
+		err = lolWriter.Close()
 		if err != nil {
 			sendError(w, http.StatusInternalServerError, err.Error(), pretty)
 			return
 		}
 	}
-	lolWriter.Free()
 
 	// text or attr: post-process texts, part 2/2
 	if attr == "" {
@@ -226,6 +226,11 @@ func sendError(w http.ResponseWriter, statusCode int, errorText string, pretty b
 	enc.SetEscapeHTML(false)
 	if pretty {
 		enc.SetIndent("", "  ")
+	}
+
+	// redact concrete error message if debug != true
+	if !debug && statusCode == http.StatusInternalServerError {
+		errorText = "Internal server error"
 	}
 
 	err := enc.Encode(Response{Error: errorText})

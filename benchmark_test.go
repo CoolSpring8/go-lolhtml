@@ -231,11 +231,10 @@ func BenchmarkNewWriter(b *testing.B) {
 						b.Fatal(err)
 					}
 
-					err = w.End()
+					err = w.Close()
 					if err != nil {
 						b.Fatal(err)
 					}
-					w.Free()
 				}
 			})
 		}

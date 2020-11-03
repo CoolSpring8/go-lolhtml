@@ -5,12 +5,22 @@ import (
 	"io"
 )
 
+// Writer takes data written to it and writes the rewritten form of that data to an
+// underlying writer (see NewWriter).
 type Writer struct {
-	w io.Writer
-	r *rewriter
+	w        io.Writer
+	rewriter *rewriter
+	err      error
+	closed   bool
 }
 
-// NewWriter returns a new Writer with Handlers and Config configured, writing to w.
+// NewWriter returns a new Writer with Handlers and an optional Config configured.
+// Writes to the returned Writer are rewritten and written to w.
+//
+// It is the caller's responsibility to call Close on the Writer when done.
+// Writes may be buffered and not flushed until Close. There is no Flush method,
+// so before using the content written by w, it is necessary to call Close
+// to ensure w has finished writing.
 func NewWriter(w io.Writer, handlers *Handlers, config ...Config) (*Writer, error) {
 	var c Config
 	var sink OutputSink
@@ -70,25 +80,53 @@ func NewWriter(w io.Writer, handlers *Handlers, config ...Config) (*Writer, erro
 		s.Free()
 	}
 
-	return &Writer{w, r}, nil
+	return &Writer{w: w, rewriter: r}, nil
 }
 
-func (w Writer) Write(p []byte) (n int, err error) {
-	return w.r.Write(p)
-}
-
-func (w Writer) WriteString(s string) (n int, err error) {
-	return w.r.WriteString(s)
-}
-
-func (w *Writer) Free() {
-	if w != nil {
-		w.r.Free()
+func (w *Writer) Write(p []byte) (n int, err error) {
+	if w.err != nil {
+		return 0, w.err
 	}
+	if len(p) == 0 {
+		return 0, nil
+	}
+	n, err = w.rewriter.Write(p)
+	if err != nil {
+		w.err = err
+		return
+	}
+	return
 }
 
-func (w *Writer) End() error {
-	return w.r.End()
+// WriteString writes a string to the Writer.
+func (w *Writer) WriteString(s string) (n int, err error) {
+	if w.err != nil {
+		return 0, w.err
+	}
+	if len(s) == 0 {
+		return 0, nil
+	}
+	n, err = w.rewriter.WriteString(s)
+	if err != nil {
+		w.err = err
+		return
+	}
+	return
+}
+
+// Close closes the Writer, flushing any unwritten data to the underlying io.Writer,
+// but does not close the underlying io.Writer.
+// Subsequent calls to Close is a no-op.
+func (w *Writer) Close() error {
+	if w == nil || w.closed {
+		return nil
+	}
+	w.closed = true
+	if w.err == nil {
+		w.err = w.rewriter.End()
+	}
+	w.rewriter.Free()
+	return w.err
 }
 
 // RewriteString rewrites the given string with the provided Handlers and Config.
@@ -104,14 +142,13 @@ func RewriteString(s string, handlers *Handlers, config ...Config) (string, erro
 	if err != nil {
 		return "", err
 	}
-	defer w.Free()
 
 	_, err = w.WriteString(s)
 	if err != nil {
 		return "", err
 	}
 
-	err = w.End()
+	err = w.Close()
 	if err != nil {
 		return "", err
 	}

@@ -16,10 +16,10 @@ func TestDoctype_GetDoctypeFields(t *testing.T) {
 						if name := doctype.Name(); name != "math" {
 							t.Errorf("wrong doctype name %s\n", name)
 						}
-						if publicId := doctype.PublicId(); publicId != "" {
+						if publicId := doctype.PublicID(); publicId != "" {
 							t.Errorf("wrong doctype name %s\n", publicId)
 						}
-						if systemId := doctype.SystemId(); systemId != "http://www.w3.org/Math/DTD/mathml1/mathml.dtd" {
+						if systemId := doctype.SystemID(); systemId != "http://www.w3.org/Math/DTD/mathml1/mathml.dtd" {
 							t.Errorf("wrong doctype name %s\n", systemId)
 						}
 						return lolhtml.Continue
@@ -31,12 +31,12 @@ func TestDoctype_GetDoctypeFields(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	_, err = w.Write([]byte(`<!DOCTYPE math SYSTEM "http://www.w3.org/Math/DTD/mathml1/mathml.dtd">`))
 	if err != nil {
 		t.Error(err)
 	}
-	err = w.End()
+	err = w.Close()
 	if err != nil {
 		t.Error(err)
 	}
@@ -58,8 +58,15 @@ func TestDoctype_StopRewriting(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer w.Free()
+
 	_, err = w.Write([]byte("<!doctype>"))
+	if err == nil {
+		t.FailNow()
+	}
+	if err.Error() != "The rewriter has been stopped." {
+		t.Error(err)
+	}
+	err = w.Close()
 	if err == nil {
 		t.FailNow()
 	}

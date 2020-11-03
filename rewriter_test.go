@@ -24,6 +24,10 @@ func TestRewriter_NonAsciiEncoding(t *testing.T) {
 	if err.Error() != "Expected ASCII-compatible encoding." {
 		t.Error(err)
 	}
+	err = w.Close()
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestRewriter_MemoryLimiting(t *testing.T) {
@@ -58,5 +62,11 @@ func TestRewriter_MemoryLimiting(t *testing.T) {
 	if err.Error() != "The memory limit has been exceeded." {
 		t.Error(err)
 	}
-	w.Free()
+	err = w.Close()
+	if err == nil {
+		t.FailNow()
+	}
+	if err.Error() != "The memory limit has been exceeded." {
+		t.Error(err)
+	}
 }
