@@ -12,21 +12,15 @@ jobs:
         include:
           - build: linux-x86_64
             os: ubuntu-latest
-            rust: stable
           - build: macos-x86_64
             os: macos-latest
-            rust: stable
           - build: windows-x86_64
             os: windows-latest
             target: x86_64-pc-windows-gnu
-            rust: stable
     steps:
       - uses: actions/checkout@v2
         with:
           repository: "cloudflare/lol-html"
-      - uses: bytecodealliance/wasmtime/.github/actions/install-rust@main
-        with:
-          toolchain: ${{ matrix.rust }}
 
       - name: Configure Cargo target
         run: |
@@ -34,9 +28,9 @@ jobs:
           rustup target add ${{ matrix.target }}
         if: matrix.target != ''
 
-      - run: cargo build --release --manifest-path c-api/Cargo.toml
+      - run: cargo build --lib --release --manifest-path c-api/Cargo.toml
         if: matrix.os != 'windows-latest'
-      - run: cargo build --release --target ${{ matrix.target }} --manifest-path c-api/Cargo.toml
+      - run: cargo build --lib --release --target ${{ matrix.target }} --manifest-path c-api/Cargo.toml
         if: matrix.os == 'windows-latest'
       
       - run: mkdir dist
