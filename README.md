@@ -1,3 +1,5 @@
+
+
 # go-lolhtml
 
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/coolspring8/go-lolhtml/Go) [![codecov](https://codecov.io/gh/CoolSpring8/go-lolhtml/branch/main/graph/badge.svg)](https://codecov.io/gh/CoolSpring8/go-lolhtml) [![Go Report Card](https://goreportcard.com/badge/github.com/coolspring8/go-lolhtml)](https://goreportcard.com/report/github.com/coolspring8/go-lolhtml) [![PkgGoDev](https://pkg.go.dev/badge/github.com/coolspring8/go-lolhtml)](https://pkg.go.dev/github.com/coolspring8/go-lolhtml)
@@ -128,7 +130,7 @@ Available at [pkg.go.dev](https://pkg.go.dev/github.com/coolspring8/go-lolhtml).
 
 ## Versioning
 
-This package does not really follow [Semantic Versioning](https://semver.org/). The current strategy is to follow lol_html's major and minor version, and the patch version number is reserved for this binding's updates, for Go Modul to upgrade correctly.
+This package does not really follow [Semantic Versioning](https://semver.org/). The current strategy is to follow lol_html's major and minor version, and the patch version number is reserved for this binding's updates, for Go Module to upgrade correctly.
 
 ## Help Wanted!
 
